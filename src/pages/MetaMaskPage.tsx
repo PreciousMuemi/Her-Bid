@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useThemeStore } from "@/store/themeStore";
 import MetaMaskWallet from "@/components/hedera/MetaMaskWallet";
 import TokenTransfer from "@/components/hedera/TokenTransfer";
+import SmartContractInteraction from "@/components/hedera/SmartContractInteraction";
 
 const MetaMaskPage = () => {
   const navigate = useNavigate();
@@ -28,6 +29,10 @@ const MetaMaskPage = () => {
         <div className="grid md:grid-cols-2 gap-8">
           <MetaMaskWallet />
           <TokenTransfer />
+        </div>
+        
+        <div className="mt-8">
+          <SmartContractInteraction />
         </div>
         
         <div className="mt-8 flex justify-center space-x-4">
@@ -59,6 +64,7 @@ const MetaMaskPage = () => {
             <li>Click "Connect MetaMask" to connect your wallet</li>
             <li>MetaMask will prompt you to add the Hedera Testnet network</li>
             <li>Once connected, you can check your balance and send HBAR to other accounts</li>
+            <li>You can also interact with smart contracts deployed on Hedera</li>
           </ol>
         </div>
       </main>
