@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import HederaPage from "./pages/HederaPage";
+import MetaMaskPage from "./pages/MetaMaskPage";
 import NotFound from "./pages/NotFound";
 import { useThemeStore } from "./store/themeStore";
 import { HederaProvider } from "./contexts/HederaContext";
@@ -33,6 +34,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/hedera" element={<HederaPage />} />
+              <Route path="/metamask" element={<MetaMaskPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

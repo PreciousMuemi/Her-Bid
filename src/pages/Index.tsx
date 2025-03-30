@@ -49,17 +49,31 @@ const Index = () => {
             Start Your Journey
           </CustomButton>
           
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/hedera')}
-            className={`${
-              theme === 'dark'
-                ? 'border-purple-400/30 text-purple-300 hover:bg-purple-500/20'
-                : 'border-primary/30 text-primary hover:bg-primary/10'
-            }`}
-          >
-            Explore Hedera Integration
-          </Button>
+          <div className="flex flex-wrap justify-center gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/hedera')}
+              className={`${
+                theme === 'dark'
+                  ? 'border-purple-400/30 text-purple-300 hover:bg-purple-500/20'
+                  : 'border-primary/30 text-primary hover:bg-primary/10'
+              }`}
+            >
+              Explore Hedera Integration
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/metamask')}
+              className={`${
+                theme === 'dark'
+                  ? 'border-blue-400/30 text-blue-300 hover:bg-blue-500/20'
+                  : 'border-blue-500/30 text-blue-600 hover:bg-blue-500/10'
+              }`}
+            >
+              Try MetaMask Connection
+            </Button>
+          </div>
         </div>
       </main>
       
