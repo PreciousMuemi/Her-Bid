@@ -8,6 +8,7 @@ import HowItWorks from "@/components/layout/HowItWorks";
 import Footer from "@/components/layout/Footer";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { useThemeStore } from "@/store/themeStore";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [isAnimated, setIsAnimated] = useState(false);
@@ -33,7 +34,7 @@ const Index = () => {
         <Hero />
         <Features />
         <HowItWorks />
-        <div className={`flex justify-center py-12 ${theme === 'dark' ? 'bg-[#0A155A]/30' : 'bg-muted/30'}`}>
+        <div className={`flex flex-col items-center gap-4 py-12 ${theme === 'dark' ? 'bg-[#0A155A]/30' : 'bg-muted/30'}`}>
           <CustomButton 
             size="lg"
             onClick={handleGetStarted}
@@ -47,6 +48,18 @@ const Index = () => {
           >
             Start Your Journey
           </CustomButton>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/hedera')}
+            className={`${
+              theme === 'dark'
+                ? 'border-purple-400/30 text-purple-300 hover:bg-purple-500/20'
+                : 'border-primary/30 text-primary hover:bg-primary/10'
+            }`}
+          >
+            Explore Hedera Integration
+          </Button>
         </div>
       </main>
       
