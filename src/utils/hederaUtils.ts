@@ -10,10 +10,34 @@ import {
   AccountId
 } from "@hashgraph/sdk";
 
-// Helper function to initialize a Hedera client
-export const initializeClient = (operatorId: string, operatorKey: string) => {
+// Helper function to initialize a Hedera client from environment variables
+export const initializeClient = () => {
+  // Get environment variables
+  const operatorId = import.meta.env.VITE_ACCOUNT_ID;
+  const operatorKey = import.meta.env.VITE_PRIVATE_KEY;
+  const network = import.meta.env.VITE_NETWORK || "testnet";
+
   if (!operatorId || !operatorKey) {
     throw new Error("Environment variables for Hedera are missing");
+  }
+
+  // Create client based on network setting
+  const client = network === "mainnet" 
+    ? Client.forMainnet() 
+    : Client.forTestnet();
+  
+  client.setOperator(
+    AccountId.fromString(operatorId),
+    PrivateKey.fromString(operatorKey)
+  );
+
+  return client;
+};
+
+// Helper function to initialize with provided credentials (fallback for backward compatibility)
+export const initializeClientWithCredentials = (operatorId: string, operatorKey: string) => {
+  if (!operatorId || !operatorKey) {
+    throw new Error("Hedera credentials are required");
   }
 
   // For testnet - use Client.forTestnet()
@@ -24,10 +48,17 @@ export const initializeClient = (operatorId: string, operatorKey: string) => {
 // Get account balance
 export const getAccountBalance = async (accountId: string): Promise<string> => {
   try {
-    const client = initializeClient(
-      process.env.HEDERA_OPERATOR_ID || "",
-      process.env.HEDERA_OPERATOR_KEY || ""
-    );
+    // Try to use environment variables first, fall back to credentials if needed
+    let client;
+    try {
+      client = initializeClient();
+    } catch (error) {
+      console.warn("Using fallback client initialization");
+      client = initializeClientWithCredentials(
+        process.env.HEDERA_OPERATOR_ID || "",
+        process.env.HEDERA_OPERATOR_KEY || ""
+      );
+    }
 
     const balance = await new AccountBalanceQuery()
       .setAccountId(accountId)
@@ -48,7 +79,7 @@ export const transferHbar = async (
   amount: number
 ): Promise<string> => {
   try {
-    const client = initializeClient(fromAccountId, fromPrivateKey);
+    const client = initializeClientWithCredentials(fromAccountId, fromPrivateKey);
 
     const transaction = await new TransferTransaction()
       .addHbarTransfer(fromAccountId, Hbar.fromTinybars(-amount))
@@ -70,7 +101,7 @@ export const createAccount = async (
   initialBalance: number
 ): Promise<{ accountId: string; privateKey: string }> => {
   try {
-    const client = initializeClient(operatorId, operatorKey);
+    const client = initializeClientWithCredentials(operatorId, operatorKey);
     const newPrivateKey = PrivateKey.generateED25519();
     const newPublicKey = newPrivateKey.publicKey;
 
