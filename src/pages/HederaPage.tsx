@@ -3,29 +3,65 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { useHedera } from "@/hooks/useHedera";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useThemeStore } from "@/store/themeStore";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, Wallet, Shield, RefreshCw } from "lucide-react";
+import { useHedera } from "@/contexts/HederaContext";
+import { useHedera as useHederaService } from "@/hooks/useHedera";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const HederaPage = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   
-  const { loading, error, fetchAccountBalance } = useHedera();
+  // Context for connection
+  const { connectToHedera, disconnectFromHedera, isConnected, accountId } = useHedera();
+  // Service for operations
+  const { loading, error, fetchAccountBalance, sendHbar, generateNewAccount } = useHederaService();
   
-  const [accountId, setAccountId] = useState("");
+  const [operatorId, setOperatorId] = useState("");
+  const [operatorKey, setOperatorKey] = useState("");
+  const [targetAccountId, setTargetAccountId] = useState("");
+  const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState<string | null>(null);
+  const [newAccountInfo, setNewAccountInfo] = useState<{ accountId: string; privateKey: string } | null>(null);
+
+  const handleConnect = () => {
+    connectToHedera(operatorId, operatorKey);
+  };
 
   const handleCheckBalance = async () => {
-    if (!accountId) return;
+    if (!targetAccountId) return;
     
-    const result = await fetchAccountBalance(accountId);
+    const result = await fetchAccountBalance(targetAccountId);
     if (result) {
       setBalance(result);
+    }
+  };
+
+  const handleCreateAccount = async () => {
+    if (!isConnected || !accountId || !operatorKey) return;
+    
+    const initialBalance = 10; // Default 10 HBAR for testing
+    const result = await generateNewAccount(accountId, operatorKey, initialBalance);
+    if (result) {
+      setNewAccountInfo(result);
+    }
+  };
+
+  const handleSendHbar = async () => {
+    if (!isConnected || !accountId || !operatorKey || !targetAccountId || !amount) return;
+    
+    const result = await sendHbar(accountId, operatorKey, targetAccountId, parseFloat(amount));
+    if (result) {
+      // Refresh balance after transfer
+      const newBalance = await fetchAccountBalance(accountId);
+      if (newBalance) {
+        setBalance(newBalance);
+      }
     }
   };
 
@@ -33,123 +69,328 @@ const HederaPage = () => {
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-[#050A30] text-white' : ''}`}>
       <Navbar />
       
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         <h1 className={`text-3xl md:text-4xl font-bold mb-8 ${
           isDark 
             ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
             : 'text-primary'
         }`}>
-          Hedera Hashgraph Integration ✨
+          Hedera Integration for HerBid ✨
         </h1>
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Connection Card */}
           <Card className={`${
             isDark 
               ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974]' 
               : 'bg-white shadow-md border border-gray-100'
           }`}>
             <CardHeader>
-              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Check Account Balance</CardTitle>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>
+                {isConnected ? 'Connected to Hedera' : 'Connect to Hedera'}
+              </CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
-                Enter a Hedera account ID to check its balance
+                {isConnected 
+                  ? `Connected with account ${accountId}`
+                  : 'Enter your Hedera credentials to connect'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                    Hedera Account ID
-                  </label>
-                  <Input
-                    placeholder="0.0.12345"
-                    value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                    className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
-                  />
-                </div>
-                
-                {balance && (
-                  <div className={`p-4 rounded-md ${
-                    isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-gray-50'
-                  }`}>
-                    <p className={`font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      Account Balance:
-                    </p>
-                    <p className={`text-xl font-bold ${
-                      isDark ? 'text-pink-300' : 'text-primary'
-                    }`}>
-                      {balance} HBAR
-                    </p>
+              {!isConnected ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                      Operator ID
+                    </label>
+                    <Input
+                      placeholder="0.0.12345"
+                      value={operatorId}
+                      onChange={(e) => setOperatorId(e.target.value)}
+                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
+                    />
                   </div>
-                )}
-                
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
-              </div>
+                  <div className="space-y-2">
+                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                      Private Key
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="Enter your private key"
+                      value={operatorKey}
+                      onChange={(e) => setOperatorKey(e.target.value)}
+                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className={`p-4 rounded-md ${
+                  isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-green-50'
+                }`}>
+                  <div className="flex items-center gap-2 text-green-500 mb-2">
+                    <Check size={20} />
+                    <span className="font-medium">Connected to Hedera Testnet</span>
+                  </div>
+                  <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                    You can now use Hedera services
+                  </p>
+                </div>
+              )}
+              
+              {error && (
+                <p className="text-red-500 text-sm mt-2">{error}</p>
+              )}
             </CardContent>
             <CardFooter>
-              <Button 
-                onClick={handleCheckBalance}
-                disabled={loading || !accountId}
-                className={`w-full ${
-                  isDark
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white'
-                    : ''
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading
-                  </>
-                ) : (
-                  'Check Balance'
-                )}
-              </Button>
+              {!isConnected ? (
+                <Button 
+                  onClick={handleConnect}
+                  disabled={loading || !operatorId || !operatorKey}
+                  className={`w-full ${
+                    isDark
+                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white'
+                      : ''
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting
+                    </>
+                  ) : (
+                    'Connect to Hedera'
+                  )}
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={disconnectFromHedera}
+                  className={`w-full ${
+                    isDark ? 'border-[#303974] text-white hover:bg-[#0A155A]/50' : ''
+                  }`}
+                >
+                  Disconnect
+                </Button>
+              )}
             </CardFooter>
           </Card>
           
-          <Card className={`${
+          {/* Hedera Operations */}
+          <Card className={`md:col-span-2 ${
             isDark 
               ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974]' 
               : 'bg-white shadow-md border border-gray-100'
           }`}>
             <CardHeader>
-              <CardTitle className={`${isDark ? 'text-white' : ''}`}>About Hedera Integration</CardTitle>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Hedera Operations</CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
-                How Herbid uses Hedera Hashgraph
+                Interact with the Hedera network
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="balance" className="w-full">
+                <TabsList className="grid grid-cols-3 mb-4">
+                  <TabsTrigger value="balance">Check Balance</TabsTrigger>
+                  <TabsTrigger value="transfer" disabled={!isConnected}>Transfer HBAR</TabsTrigger>
+                  <TabsTrigger value="create" disabled={!isConnected}>Create Account</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="balance" className="space-y-4">
+                  <div className="space-y-2">
+                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                      Account ID
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="0.0.12345"
+                        value={targetAccountId}
+                        onChange={(e) => setTargetAccountId(e.target.value)}
+                        className={`flex-1 ${isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}`}
+                      />
+                      <Button 
+                        onClick={handleCheckBalance}
+                        disabled={loading || !targetAccountId}
+                        className={isDark ? 'bg-[#4D5BCE]' : ''}
+                      >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw size={16} />}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {balance && (
+                    <div className={`p-4 rounded-md ${
+                      isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-gray-50'
+                    }`}>
+                      <p className={`font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                        Account Balance:
+                      </p>
+                      <p className={`text-xl font-bold ${
+                        isDark ? 'text-pink-300' : 'text-primary'
+                      }`}>
+                        {balance} HBAR
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="transfer" className="space-y-4">
+                  <div className="space-y-2">
+                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                      To Account ID
+                    </label>
+                    <Input
+                      placeholder="0.0.12345"
+                      value={targetAccountId}
+                      onChange={(e) => setTargetAccountId(e.target.value)}
+                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                      Amount (HBAR)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="1.0"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSendHbar}
+                    disabled={loading || !targetAccountId || !amount || !isConnected}
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing
+                      </>
+                    ) : (
+                      <>
+                        <Wallet className="mr-2 h-4 w-4" />
+                        Send HBAR
+                      </>
+                    )}
+                  </Button>
+                </TabsContent>
+                
+                <TabsContent value="create" className="space-y-4">
+                  <div className={`p-4 rounded-md ${
+                    isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-blue-50'
+                  }`}>
+                    <div className="flex items-center gap-2 text-blue-500 mb-2">
+                      <Shield size={20} />
+                      <span className="font-medium">Create a new Hedera account</span>
+                    </div>
+                    <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                      This will create a new account funded with 10 HBAR from your account
+                    </p>
+                  </div>
+                  
+                  {newAccountInfo && (
+                    <div className={`p-4 rounded-md ${
+                      isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-green-50'
+                    }`}>
+                      <h3 className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                        New Account Created!
+                      </h3>
+                      <div className="space-y-2">
+                        <div>
+                          <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                            Account ID:
+                          </p>
+                          <p className={`text-sm font-mono bg-black/10 p-1 rounded ${
+                            isDark ? 'text-white' : 'text-black'
+                          }`}>
+                            {newAccountInfo.accountId}
+                          </p>
+                        </div>
+                        <div>
+                          <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                            Private Key (keep this secure!):
+                          </p>
+                          <p className={`text-sm font-mono bg-black/10 p-1 rounded truncate ${
+                            isDark ? 'text-white' : 'text-black'
+                          }`}>
+                            {newAccountInfo.privateKey}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleCreateAccount}
+                    disabled={loading || !isConnected}
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating
+                      </>
+                    ) : 'Create New Account'}
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+          
+          {/* About Hedera Card */}
+          <Card className={`md:col-span-3 ${
+            isDark 
+              ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974]' 
+              : 'bg-white shadow-md border border-gray-100'
+          }`}>
+            <CardHeader>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Hedera Integration for HerBid</CardTitle>
+              <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
+                How HerBid utilizes Hedera Hashgraph technology
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className={`${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                Herbid uses Hedera Hashgraph to:
-              </p>
-              <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                <li>Create secure and transparent bidding processes</li>
-                <li>Ensure tamper-proof contract agreements</li>
-                <li>Enable fast and low-cost payments between parties</li>
-                <li>Store bid history and contract fulfillment data</li>
-                <li>Support a decentralized reputation system</li>
-              </ul>
-              
-              <div className={`p-4 rounded-md ${
-                isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-gray-50'
-              }`}>
-                <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                  Hedera Hashgraph provides the speed, security, and cost-effectiveness needed for a modern contracting platform.
-                </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : ''}`}>
+                    Benefits for HerBid Platform
+                  </h3>
+                  <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                    <li>Secure and transparent bidding with immutable records</li>
+                    <li>Fast, low-cost payments between consortium members</li>
+                    <li>Tokenized reputation system with verified credentials</li>
+                    <li>Escrow contracts for milestone-based payments</li>
+                    <li>Cryptographically secure contract agreements</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : ''}`}>
+                    Why Hedera for HerBid
+                  </h3>
+                  <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                    <li>Fast finality (2-3 seconds) enables real-time bidding</li>
+                    <li>Energy-efficient consensus algorithm</li>
+                    <li>Enterprise-grade security and compliance</li>
+                    <li>Predictable, low transaction fees</li>
+                    <li>Robust smart contract capabilities</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button 
                 variant="outline" 
-                onClick={() => navigate('/dashboard')}
-                className={`w-full ${
-                  isDark ? 'border-[#303974] text-white hover:bg-[#0A155A]/50' : ''
-                }`}
+                onClick={() => navigate('/')}
+                className="mr-2"
               >
-                Back to Dashboard
+                Back to Home
+              </Button>
+              <Button 
+                variant="default" 
+                onClick={() => navigate('/dashboard')}
+              >
+                Go to Dashboard
               </Button>
             </CardFooter>
           </Card>
