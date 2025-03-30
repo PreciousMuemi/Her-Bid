@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Typography, Box, CssBaseline, AppBar, Toolbar } from '@mui/material';
-import WalletConnect from './Components/WalletConnect';
-import AccountBalance from './Components/AccountBalance';
+import WalletConnect from './components/WalletConnect';
+import AccountBalance from './components/AccountBalance';
 
 function App() {
   const [account, setAccount] = useState('');
