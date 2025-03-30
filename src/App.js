@@ -1,24 +1,33 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { Container, Typography, Box, CssBaseline, AppBar, Toolbar } from '@mui/material';
+import WalletConnect from './Components/WalletConnect';
+import AccountBalance from './Components/AccountBalance';
 
 function App() {
+  const [account, setAccount] = useState('');
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <CssBaseline />
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6">
+            My Hedera dApp
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="sm">
+        <Box sx={{ my: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Welcome to My Hedera dApp
+          </Typography>
+          
+          <WalletConnect onConnect={(account) => setAccount(account)} />
+          
+          {account && <AccountBalance account={account} />}
+        </Box>
+      </Container>
+    </>
   );
 }
 
