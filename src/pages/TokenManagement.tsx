@@ -1,8 +1,9 @@
 import React from 'react';
 import { useHedera } from '../contexts/HederaContext';
-import TokenCreator from '../components/TokenCreator';
-import TokenAssociator from '../components/TokenAssociator';
-import TokenTransfer from '../components/TokenTransfer';
+import TokenCreator from './TokenCreator';
+import TokenAssociator from './TokenAssociator';
+
+// import TokenTransfer from '../components/TokenTransfer';
 
 const TokenManagement: React.FC = () => {
   const { isConnected, accountId, balance } = useHedera();
@@ -34,7 +35,7 @@ const TokenManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <TokenCreator />
         <TokenAssociator />
-        <TokenTransfer />
+      
       </div>
     </div>
   );

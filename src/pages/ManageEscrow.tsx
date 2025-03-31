@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHedera } from '../contexts/HederaContext';
-import ContractInteraction from '../components/ContractInteraction';
+import ContractInteraction from '../pages/ContractInteraction';
 
 // Sample escrow contract bytecode and ABI
 const ESCROW_CONTRACT_BYTECODE = "0x608060405234801561001057600080fd5b50..."; // Replace with actual bytecode

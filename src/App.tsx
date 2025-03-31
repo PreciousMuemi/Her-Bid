@@ -10,10 +10,11 @@ import Dashboard from "./pages/Dashboard";
 import HederaPage from "./pages/HederaPage";
 import MetaMaskPage from "./pages/MetaMaskPage";
 import NotFound from "./pages/NotFound";
-import CreateConsortium from './pages/CreateConsortium';
+import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
-import VerifyCredentials from './pages/VerifyCredentials';
+import  AuthPage from './pages/Auth';
+// import VerifyCredentials from './pages/VerifyCredentials';
 
 import { useThemeStore } from "./store/themeStore";
 import { HederaProvider } from "./contexts/HederaContext";
@@ -43,13 +44,14 @@ const App = () => {
 
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<AuthPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/hedera" element={<HederaPage />} />
               <Route path="/metamask" element={<MetaMaskPage />} />
               <Route path="/create-consortium" element={<CreateConsortium />} />
               <Route path="/manage-escrow" element={<ManageEscrow />} />
               <Route path="/token-management" element={<TokenManagement />} />
-              <Route path="/verify-credentials" element={<VerifyCredentials />} />
+              {/* <Route path="/verify-credentials" element={<VerifyCredentials />} /> */}
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
