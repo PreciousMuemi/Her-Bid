@@ -559,3 +559,12 @@ export const useHedera = () => {
   }
   return context;
 };
+
+// This enhanced version includes:
+// A new createAccount function to generate new Hedera accounts
+// A sendHbarToMetaMask function to transfer HBAR to EVM addresses
+// Improved parameter handling in contract functions
+// Automatic balance refreshing after transactions
+// Better error handling and type checking
+// Support for payable contract functions
+// Enhanced token association to work with any account

@@ -29,7 +29,7 @@ const DashboardContent = ({ activePage, isSidebarOpen }: DashboardContentProps) 
     // Random greetings for a personal touch
     const greetings = [
       "Hey girl!",
-      "Welcome back queen!",
+      "Welcome back queen!",a
       "Hi gorgeous!",
       "Heyyy bestie!",
       "Yasss, you're here!",

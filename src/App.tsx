@@ -10,8 +10,15 @@ import Dashboard from "./pages/Dashboard";
 import HederaPage from "./pages/HederaPage";
 import MetaMaskPage from "./pages/MetaMaskPage";
 import NotFound from "./pages/NotFound";
+import CreateConsortium from './pages/CreateConsortium';
+import ManageEscrow from './pages/ManageEscrow';
+import TokenManagement from './pages/TokenManagement';
+import VerifyCredentials from './pages/VerifyCredentials';
+
 import { useThemeStore } from "./store/themeStore";
 import { HederaProvider } from "./contexts/HederaContext";
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 
 const queryClient = new QueryClient();
 
@@ -30,14 +37,26 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+          <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow container mx-auto px-4 py-8">
+
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/hedera" element={<HederaPage />} />
               <Route path="/metamask" element={<MetaMaskPage />} />
+              <Route path="/create-consortium" element={<CreateConsortium />} />
+              <Route path="/manage-escrow" element={<ManageEscrow />} />
+              <Route path="/token-management" element={<TokenManagement />} />
+              <Route path="/verify-credentials" element={<VerifyCredentials />} />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </main>
+          <Footer />
+        </div>
           </BrowserRouter>
         </HederaProvider>
       </TooltipProvider>
