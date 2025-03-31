@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Sparkles, User, Key, Wallet, AlertTriangle } from "lucide-react";
 import { ethers } from "ethers";
 import { toast } from "sonner";
-import { HashConnect } from "hashconnect";
-import { BladeConnector } from "@bladelabs/blade-web3.js";
-import { useHedera } from "../contexts/HederaContext";
+import { useHedera } from "../hooks/useHedera";
 import { checkUserExistsEth, registerUserEth, checkUserExistsHedera, registerUserHedera } from "../utils/userRegistryUtils";
 
 // Type definitions
@@ -24,7 +23,7 @@ const APP_LOGO_URL = "https://your-app.com/logo.png";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { client, connectToHedera } = useHedera();
+  const { loading: hederaLoading, error: hederaError, fetchAccountBalance } = useHedera();
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -35,15 +34,6 @@ const AuthPage = () => {
     walletType: null
   });
   
-  // Wallet connection states
-  const [hashConnect, setHashConnect] = useState<HashConnect | null>(null);
-  const [bladeConnector, setBladeConnector] = useState<BladeConnector | null>(null);
-  const [hashConnectData, setHashConnectData] = useState({
-    topic: "",
-    pairingString: "",
-    pairingData: null as { accountIds?: string[] } | null
-  });
-
   // Form state
   const [formData, setFormData] = useState({
     businessName: "",
@@ -56,7 +46,7 @@ const AuthPage = () => {
   const [walletAvailability, setWalletAvailability] = useState({
     metamask: false,
     hashpack: false,
-    blade: true
+    blade: false
   });
 
   // Initialize wallet connectors
@@ -66,90 +56,9 @@ const AuthPage = () => {
       ...prev,
       metamask: !!window.ethereum
     }));
-
-    // Initialize HashConnect
-    const initHashConnect = async () => {
-      try {
-        const hc = new HashConnect();
-        
-        const appMetadata = {
-          name: APP_NAME,
-          description: APP_DESCRIPTION,
-          icon: APP_LOGO_URL,
-          url: window.location.origin
-        };
-        
-        const initData = await hc.init(appMetadata);
-        hc.debug = process.env.NODE_ENV === 'development';
-        
-        hc.foundExtensionEvent.once(() => {
-          setWalletAvailability(prev => ({ ...prev, hashpack: true }));
-        });
-        
-        hc.pairingEvent.on((pairingData) => {
-          setHashConnectData(prev => ({
-            ...prev,
-            pairingData
-          }));
-          
-          if (pairingData.accountIds?.length > 0) {
-            authenticateWithHashPack(pairingData.accountIds[0]);
-          }
-        });
-        
-        setHashConnect(hc);
-        
-        if (initData.savedPairings.length > 0) {
-          const pairing = initData.savedPairings[0];
-          setHashConnectData({
-            topic: pairing.topic,
-            pairingString: "",
-            pairingData: pairing
-          });
-        } else {
-          const pairingString = hc.generatePairingString(
-            initData.topic,
-            "testnet",
-            false
-          );
-          setHashConnectData({
-            topic: initData.topic,
-            pairingString,
-            pairingData: null
-          });
-        }
-      } catch (error) {
-        console.error("HashConnect initialization error:", error);
-      }
-    };
-
-    // Initialize Blade Connector
-    const initBladeConnector = async () => {
-      try {
-        const connector = new BladeConnector();
-        await connector.createSession({
-          network: "testnet",
-          dAppMetadata: {
-            name: APP_NAME,
-            description: APP_DESCRIPTION,
-            url: window.location.origin,
-            icons: [APP_LOGO_URL]
-          }
-        });
-        setBladeConnector(connector);
-      } catch (error) {
-        console.error("Blade connector initialization error:", error);
-      }
-    };
     
-    initHashConnect();
-    initBladeConnector();
-
-    return () => {
-      if (hashConnect) {
-        hashConnect.disconnect();
-      }
-    };
+    // For now, let's disable HashPack and Blade until we have proper implementations
+    // This will prevent errors from showing up in the UI
   }, []);
 
   // Handle form input changes
@@ -173,8 +82,6 @@ const AuthPage = () => {
       // Check if user exists based on wallet type
       if (walletType === 'metamask' && provider) {
         userExists = await checkUserExistsEth(provider, accountId);
-      } else if (client) {
-        userExists = await checkUserExistsHedera(client, accountId);
       } else {
         throw new Error("No client available for authentication");
       }
@@ -198,8 +105,6 @@ const AuthPage = () => {
       if (authMode === "signup") {
         if (walletType === 'metamask' && provider) {
           await registerUserEth(provider, formData);
-        } else if (client) {
-          await registerUserHedera(client, accountId, formData);
         } else {
           throw new Error("No client available for registration");
         }
@@ -216,11 +121,6 @@ const AuthPage = () => {
       // For signup, store profile data locally too
       if (authMode === "signup") {
         localStorage.setItem("userProfile", JSON.stringify(formData));
-      }
-      
-      // Connect to Hedera context if not already connected
-      if (!client) {
-        connectToHedera();
       }
       
       // Navigate to dashboard
@@ -302,62 +202,16 @@ const AuthPage = () => {
     }
   };
 
-  // Connect with HashPack
+  // Connect with HashPack - SIMPLIFIED VERSION THAT WILL JUST SHOW A "COMING SOON" MESSAGE
   const connectHashPack = async () => {
-    if (!hashConnect) {
-      setWalletError("HashConnect not initialized");
-      return;
-    }
-    
-    try {
-      setIsConnecting(true);
-      setWalletError(null);
-      
-      if (hashConnectData.pairingData) {
-        const accountId = hashConnectData.pairingData.accountIds[0];
-        await authenticateWithSmartContract(accountId, "hashpack");
-      } else {
-        hashConnect.connectToLocalWallet(hashConnectData.pairingString);
-      }
-    } catch (error: any) {
-      console.error("HashPack connection error:", error);
-      setWalletError(error.message || "Failed to connect HashPack");
-    } finally {
-      setIsConnecting(false);
-    }
+    setWalletError("HashPack integration coming soon. Please use MetaMask for now.");
+    toast.info("HashPack integration coming soon. Please use MetaMask for now.");
   };
 
-  // Connect with Blade Wallet
+  // Connect with Blade Wallet - SIMPLIFIED VERSION THAT WILL JUST SHOW A "COMING SOON" MESSAGE
   const connectBlade = async () => {
-    if (!bladeConnector) {
-      setWalletError("Blade connector not initialized");
-      return;
-    }
-    
-    try {
-      setIsConnecting(true);
-      setWalletError(null);
-      
-      const accountInfo = await bladeConnector.connect();
-      const accountId = accountInfo.accountId;
-      
-      const message = `Welcome to ${APP_NAME}! Please sign this message to verify your account. Nonce: ${Date.now()}`;
-      const signResult = await bladeConnector.signMessage(message, accountId);
-      
-      setConnectionInfo({
-        accountId,
-        provider: bladeConnector,
-        network: "testnet",
-        walletType: "blade"
-      });
-      
-      await authenticateWithSmartContract(accountId, "blade");
-    } catch (error: any) {
-      console.error("Blade connection error:", error);
-      setWalletError(error.message || "Failed to connect Blade Wallet");
-    } finally {
-      setIsConnecting(false);
-    }
+    setWalletError("Blade Wallet integration coming soon. Please use MetaMask for now.");
+    toast.info("Blade Wallet integration coming soon. Please use MetaMask for now.");
   };
 
   return (
@@ -493,47 +347,36 @@ const AuthPage = () => {
               </button>
             )}
             
-            {walletAvailability.hashpack && (
-              <button
-                type="button"
-                onClick={connectHashPack}
-                disabled={isConnecting || !hashConnect}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <img 
-                    src="https://www.hashpack.app/img/logo.svg" 
-                    alt="HashPack" 
-                    className="h-5 w-5"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/default-wallet-logo.png';
-                    }}
-                  />
-                </span>
-                {isConnecting ? "Connecting..." : "Connect with HashPack"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={connectHashPack}
+              disabled={isConnecting}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70"
+            >
+              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <img 
+                  src="https://www.hashpack.app/img/logo.svg" 
+                  alt="HashPack" 
+                  className="h-5 w-5"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/default-wallet-logo.png';
+                  }}
+                />
+              </span>
+              {isConnecting ? "Connecting..." : "Connect with HashPack (Coming Soon)"}
+            </button>
             
-            {walletAvailability.blade && (
-              <button
-                type="button"
-                onClick={connectBlade}
-                disabled={isConnecting || !bladeConnector}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-70"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <img 
-                    src="/blade-wallet-logo.png" 
-                    alt="Blade" 
-                    className="h-5 w-5"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/default-wallet-logo.png';
-                    }}
-                  />
-                </span>
-                {isConnecting ? "Connecting..." : "Connect with Blade"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={connectBlade}
+              disabled={isConnecting}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-70"
+            >
+              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <Wallet className="h-5 w-5 text-white" />
+              </span>
+              {isConnecting ? "Connecting..." : "Connect with Blade (Coming Soon)"}
+            </button>
           </div>
           
           {/* Toggle between signup and login */}
