@@ -1,58 +1,146 @@
 
 import React, { useState } from 'react';
 import { useHedera } from '../hooks/useHedera';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useThemeStore } from '@/store/themeStore';
+import { Code, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-const ContractDeployer: React.FC = () => {
-  const { fetchAccountBalance } = useHedera();
+interface ContractDeployerProps {
+  className?: string;
+}
+
+const ContractDeployer: React.FC<ContractDeployerProps> = ({ className }) => {
+  const { theme } = useThemeStore();
+  const { accountId, isConnected, deployContract } = useHedera();
   const [bytecode, setBytecode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+  const isDark = theme === 'dark';
 
   const handleDeployContract = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!bytecode.trim()) {
+      toast.error("Please enter contract bytecode");
+      return;
+    }
+    
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
     setIsLoading(true);
     setResult(null);
+    setIsError(false);
     
     try {
-      // Placeholder for actual contract deployment
-      // In a real implementation, we would call deployContract from useHedera
-      setResult(`Contract deployment functionality is coming soon!`);
+      // Clean bytecode if needed
+      let cleanedBytecode = bytecode.trim();
+      if (cleanedBytecode.startsWith("0x")) {
+        cleanedBytecode = cleanedBytecode.slice(2);
+      }
+      
+      // Call deployContract from useHedera hook
+      const contractId = await deployContract(cleanedBytecode, 100000);
+      
+      setResult(`Contract successfully deployed with ID: ${contractId}`);
+      toast.success("Contract deployed successfully!");
     } catch (error) {
-      setResult(`Error deploying contract: ${error instanceof Error ? error.message : String(error)}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setResult(`Error deploying contract: ${errorMessage}`);
+      setIsError(true);
+      toast.error("Failed to deploy contract");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">Deploy Smart Contract</h2>
-      <form onSubmit={handleDeployContract}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contract Bytecode</label>
-          <textarea
-            value={bytecode}
-            onChange={(e) => setBytecode(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md h-32"
-            placeholder="0x608060405234801561001057600080fd5b50..."
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">Paste the compiled bytecode of your smart contract</p>
-        </div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-        >
-          {isLoading ? 'Deploying...' : 'Deploy Contract'}
-        </button>
-      </form>
-      {result && (
-        <div className={`mt-4 p-3 rounded-md ${result.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-          {result}
-        </div>
-      )}
-    </div>
+    <Card className={`${
+      isDark 
+        ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974]' 
+        : 'bg-white shadow-md border border-gray-100'
+    } ${className || ''}`}>
+      <CardHeader>
+        <CardTitle className={isDark ? 'text-white' : ''}>
+          <div className="flex items-center gap-2">
+            <Code className="h-5 w-5" />
+            <span>Deploy Smart Contract</span>
+          </div>
+        </CardTitle>
+        <CardDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
+          Deploy your smart contract bytecode to the Hedera network
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <form onSubmit={handleDeployContract}>
+          <div className="mb-4">
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Contract Bytecode
+            </label>
+            <Textarea
+              value={bytecode}
+              onChange={(e) => setBytecode(e.target.value)}
+              className={`w-full h-32 ${isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}`}
+              placeholder="0x608060405234801561001057600080fd5b50..."
+              required
+            />
+            <p className={`text-xs mt-1 ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+              Paste the compiled bytecode of your smart contract (with or without 0x prefix)
+            </p>
+          </div>
+          
+          {result && (
+            <Alert className={`mb-4 ${isError 
+              ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+              : 'bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            }`}>
+              {isError 
+                ? <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" /> 
+                : <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              }
+              <AlertDescription className={`${isError 
+                ? 'text-red-600 dark:text-red-400' 
+                : 'text-green-600 dark:text-green-400'
+              }`}>
+                {result}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <Button
+            type="submit"
+            disabled={isLoading || !isConnected}
+            className="w-full"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deploying Contract...
+              </>
+            ) : (
+              "Deploy Contract"
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      
+      <CardFooter className={`flex flex-col items-start text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+        <p>
+          Connected Account: {accountId ? <span className="font-mono">{accountId}</span> : "Not connected"}
+        </p>
+        <p className="mt-1">
+          Network: Hedera Testnet
+        </p>
+      </CardFooter>
+    </Card>
   );
 };
 

@@ -1,40 +1,38 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, Sparkles, User, Key, Wallet, AlertTriangle } from "lucide-react";
-import { ethers } from "ethers";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useHedera } from "@/hooks/useHedera";
+import { useThemeStore } from "@/store/themeStore";
 import { toast } from "sonner";
-import { useHedera } from "../hooks/useHedera";
-import { checkUserExistsEth, registerUserEth, checkUserExistsHedera, registerUserHedera } from "../utils/userRegistryUtils";
+import { Wallet, Shield, UserRoundPlus, Loader2 } from "lucide-react";
 
-// Type definitions
-type WalletType = "metamask" | "hashpack" | "blade";
-type ConnectionInfo = {
-  accountId: string | null;
-  provider: any;
-  network: string | null;
-  walletType: WalletType | null;
-};
+enum AuthMode {
+  LOGIN = "login",
+  SIGNUP = "signup"
+}
 
-// Environment configuration
-const APP_NAME = "HerBid";
-const APP_DESCRIPTION = "Consortium bidding platform for women-led businesses";
-const APP_LOGO_URL = "https://your-app.com/logo.png";
+enum WalletType {
+  METAMASK = "metamask",
+  HASHPACK = "hashpack",
+  BLADE = "blade"
+}
 
-const AuthPage = () => {
+const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loading: hederaLoading, error: hederaError, fetchAccountBalance } = useHedera();
-  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
+  const { theme } = useThemeStore();
+  const { connectMetaMask } = useHedera();
+  
+  const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.LOGIN);
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
-  const [connectionInfo, setConnectionInfo] = useState<ConnectionInfo>({
-    accountId: null,
-    provider: null,
-    network: null,
-    walletType: null
-  });
   
-  // Form state
+  // Form data for signup
   const [formData, setFormData] = useState({
     businessName: "",
     email: "",
@@ -42,382 +40,312 @@ const AuthPage = () => {
     skills: ""
   });
 
-  // Wallet availability
-  const [walletAvailability, setWalletAvailability] = useState({
-    metamask: false,
-    hashpack: false,
-    blade: false
-  });
-
-  // Initialize wallet connectors
-  useEffect(() => {
-    // Check for MetaMask
-    setWalletAvailability(prev => ({
-      ...prev,
-      metamask: !!window.ethereum
-    }));
-    
-    // For now, let's disable HashPack and Blade until we have proper implementations
-    // This will prevent errors from showing up in the UI
-  }, []);
-
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({
+      ...formData,
+      [name]: value
+    });
   };
 
-  // Authenticate with smart contract
-  const authenticateWithSmartContract = async (
-    accountId: string,
-    walletType: WalletType,
-    provider?: ethers.providers.Web3Provider
-  ) => {
+  // Handle industry selection
+  const handleIndustryChange = (value: string) => {
+    setFormData({
+      ...formData,
+      industry: value
+    });
+  };
+
+  // Connect to MetaMask wallet
+  const handleMetaMaskConnect = async () => {
     try {
       setIsConnecting(true);
       setWalletError(null);
       
-      let userExists = false;
+      const success = await connectMetaMask();
       
-      // Check if user exists based on wallet type
-      if (walletType === 'metamask' && provider) {
-        userExists = await checkUserExistsEth(provider, accountId);
-      } else {
-        throw new Error("No client available for authentication");
-      }
-      
-      // Validate based on auth mode
-      if (authMode === "signup" && userExists) {
-        toast.error("Account already registered. Please log in instead.");
-        setAuthMode("login");
-        setIsConnecting(false);
-        return;
-      }
-      
-      if (authMode === "login" && !userExists) {
-        toast.error("Account not registered. Please sign up first.");
-        setAuthMode("signup");
-        setIsConnecting(false);
-        return;
-      }
-      
-      // For signup, register the user
-      if (authMode === "signup") {
-        if (walletType === 'metamask' && provider) {
-          await registerUserEth(provider, formData);
-        } else {
-          throw new Error("No client available for registration");
+      if (success) {
+        // Save auth state
+        localStorage.setItem("isAuthenticated", "true");
+        
+        // In signup mode, also save user profile
+        if (authMode === AuthMode.SIGNUP && formData.businessName) {
+          localStorage.setItem("userProfile", JSON.stringify(formData));
         }
-        toast.success("Account registered successfully!");
+        
+        toast.success(`Successfully ${authMode === AuthMode.LOGIN ? 'logged in' : 'signed up'} with MetaMask`);
+        navigate("/dashboard");
       } else {
-        toast.success("Login successful!");
+        throw new Error("Failed to connect to MetaMask");
       }
-      
-      // Store authentication state
-      localStorage.setItem("hederaAccount", accountId);
-      localStorage.setItem("walletType", walletType);
-      localStorage.setItem("isAuthenticated", "true");
-      
-      // For signup, store profile data locally too
-      if (authMode === "signup") {
-        localStorage.setItem("userProfile", JSON.stringify(formData));
-      }
-      
-      // Navigate to dashboard
-      navigate("/dashboard");
-    } catch (error: any) {
-      console.error("Authentication error:", error);
-      setWalletError(error.message || "Authentication failed");
-      toast.error(error.message || "Authentication failed");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Connect with MetaMask
-  const connectMetaMask = async () => {
-    if (!window.ethereum) {
-      setWalletError("MetaMask not installed");
-      return;
-    }
-    
-    try {
-      setIsConnecting(true);
-      setWalletError(null);
-      
-      const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      const hederaChainId = "0x128"; // Hedera testnet
-      
-      // Check and switch to Hedera Testnet
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      
-      if (chainId !== hederaChainId) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: hederaChainId }],
-          });
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainName: "Hedera Testnet",
-                  chainId: hederaChainId,
-                  nativeCurrency: { name: "HBAR", symbol: "ℏ", decimals: 18 },
-                  rpcUrls: ["https://testnet.hashio.io/api"],
-                  blockExplorerUrls: ["https://hashscan.io/testnet/"],
-                },
-              ],
-            });
-          } else {
-            throw switchError;
-          }
-        }
-      }
-      
-      // Request account access
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const selectedAccount = accounts[0];
-      
-      // Verify account ownership
-      const signer = provider.getSigner();
-      const message = `Welcome to ${APP_NAME}! Please sign this message to verify your account. Nonce: ${Date.now()}`;
-      const signature = await signer.signMessage(message);
-      
-      setConnectionInfo({
-        accountId: selectedAccount,
-        provider,
-        network: "testnet",
-        walletType: "metamask"
-      });
-      
-      await authenticateWithSmartContract(selectedAccount, "metamask", provider);
     } catch (error: any) {
       console.error("MetaMask connection error:", error);
-      setWalletError(error.message || "Failed to connect MetaMask");
+      setWalletError(error.message);
+      toast.error(`Failed to connect: ${error.message}`);
     } finally {
       setIsConnecting(false);
     }
-  };
-
-  // Connect with HashPack - SIMPLIFIED VERSION THAT WILL JUST SHOW A "COMING SOON" MESSAGE
-  const connectHashPack = async () => {
-    setWalletError("HashPack integration coming soon. Please use MetaMask for now.");
-    toast.info("HashPack integration coming soon. Please use MetaMask for now.");
-  };
-
-  // Connect with Blade Wallet - SIMPLIFIED VERSION THAT WILL JUST SHOW A "COMING SOON" MESSAGE
-  const connectBlade = async () => {
-    setWalletError("Blade Wallet integration coming soon. Please use MetaMask for now.");
-    toast.info("Blade Wallet integration coming soon. Please use MetaMask for now.");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#050A30] to-[#16216e] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20 shadow-xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
-            {authMode === "signup" ? "Join the Platform" : "Welcome Back!"}
-          </h2>
-          <p className="mt-2 text-sm text-[#B2B9E1]">
-            {authMode === "signup" 
-              ? "Create your profile and connect your Hedera wallet" 
-              : "Connect your wallet to continue"}
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-16 max-w-6xl">
+      <div className="text-center mb-10">
+        <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
+            : 'text-gray-900'
+        }`}>
+          Join the HerBid Network
+        </h1>
+        <p className={`text-lg max-w-3xl mx-auto ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+          Connect your wallet to access the platform designed specifically for women-led businesses to collaborate and win larger contracts.
+        </p>
+      </div>
 
-        {walletError && (
-          <div className="bg-red-500/20 border border-red-500/50 rounded-md p-3 flex items-start">
-            <AlertTriangle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-white">{walletError}</p>
-          </div>
-        )}
-
-        <div className="mt-8 space-y-6">
-          {authMode === "signup" && (
-            <>
-              <div>
-                <label htmlFor="businessName" className="sr-only">Business Name</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-purple-300" />
-                  </div>
-                  <input
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className={`p-6 md:p-10 rounded-xl ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border border-[#303974]' 
+            : 'bg-white border border-gray-200'
+        } shadow-lg`}>
+          <Tabs defaultValue={authMode} onValueChange={(v) => setAuthMode(v as AuthMode)} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value={AuthMode.LOGIN}>Login</TabsTrigger>
+              <TabsTrigger value={AuthMode.SIGNUP}>Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value={AuthMode.LOGIN}>
+              <CardHeader className="px-0">
+                <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : ''}`}>
+                  Welcome Back!
+                </CardTitle>
+                <CardDescription className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
+                  Connect your wallet to access your HerBid account
+                </CardDescription>
+              </CardHeader>
+            </TabsContent>
+            
+            <TabsContent value={AuthMode.SIGNUP}>
+              <CardHeader className="px-0">
+                <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : ''}`}>
+                  Create Your Profile
+                </CardTitle>
+                <CardDescription className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
+                  Tell us about your business to get started
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="px-0 space-y-4">
+                <div className="space-y-2">
+                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="businessName">
+                    Business Name
+                  </Label>
+                  <Input
                     id="businessName"
                     name="businessName"
-                    type="text"
-                    required
                     value={formData.businessName}
                     onChange={handleInputChange}
-                    className="appearance-none relative block w-full px-3 py-3 pl-10 bg-[#0A155A]/70 border border-[#303974] placeholder-[#8891C5] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Business Name"
+                    placeholder="Your Business Name"
+                    className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="sr-only">Email</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Key className="h-5 w-5 text-pink-300" />
-                  </div>
-                  <input
+                
+                <div className="space-y-2">
+                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="email">
+                    Email Address
+                  </Label>
+                  <Input
                     id="email"
                     name="email"
                     type="email"
-                    required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="appearance-none relative block w-full px-3 py-3 pl-10 bg-[#0A155A]/70 border border-[#303974] placeholder-[#8891C5] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Email"
+                    placeholder="you@example.com"
+                    className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label htmlFor="industry" className="sr-only">Industry</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <ShieldCheck className="h-5 w-5 text-indigo-300" />
-                  </div>
-                  <select
-                    id="industry"
-                    name="industry"
-                    required
-                    value={formData.industry}
-                    onChange={handleInputChange}
-                    className="appearance-none relative block w-full px-3 py-3 pl-10 bg-[#0A155A]/70 border border-[#303974] placeholder-[#8891C5] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="" disabled className="bg-[#0A155A]">Select your industry</option>
-                    <option value="tech" className="bg-[#0A155A]">Technology</option>
-                    <option value="marketing" className="bg-[#0A155A]">Marketing & PR</option>
-                    <option value="design" className="bg-[#0A155A]">Design & Creative</option>
-                    <option value="consulting" className="bg-[#0A155A]">Consulting</option>
-                    <option value="construction" className="bg-[#0A155A]">Construction</option>
-                    <option value="healthcare" className="bg-[#0A155A]">Healthcare</option>
-                    <option value="finance" className="bg-[#0A155A]">Finance</option>
-                    <option value="other" className="bg-[#0A155A]">Other</option>
-                  </select>
+                
+                <div className="space-y-2">
+                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="industry">
+                    Industry
+                  </Label>
+                  <Select value={formData.industry} onValueChange={handleIndustryChange}>
+                    <SelectTrigger className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}>
+                      <SelectValue placeholder="Select an industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="consulting">Consulting</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              
-              <div>
-                <label htmlFor="skills" className="sr-only">Key Skills</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Sparkles className="h-5 w-5 text-purple-300" />
-                  </div>
-                  <textarea
+                
+                <div className="space-y-2">
+                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="skills">
+                    Skills & Expertise
+                  </Label>
+                  <Input
                     id="skills"
                     name="skills"
-                    required
                     value={formData.skills}
                     onChange={handleInputChange}
-                    rows={3}
-                    className="appearance-none relative block w-full px-3 py-3 pl-10 bg-[#0A155A]/70 border border-[#303974] placeholder-[#8891C5] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Key Skills (comma separated)"
+                    placeholder="Web Development, Design, Project Management, etc."
+                    className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
                   />
                 </div>
+              </CardContent>
+            </TabsContent>
+            
+            <div className="space-y-4 mt-6">
+              <div className={`p-4 rounded-lg ${
+                theme === 'dark' ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-gray-50 border border-gray-100'
+              }`}>
+                <h3 className={`font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>
+                  Connect Your Wallet
+                </h3>
+                
+                <Button
+                  className="w-full justify-start mb-2"
+                  variant={theme === 'dark' ? "outline" : "secondary"}
+                  onClick={handleMetaMaskConnect}
+                  disabled={isConnecting || (authMode === AuthMode.SIGNUP && !formData.businessName)}
+                >
+                  {isConnecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Wallet className="h-4 w-4 mr-2" />
+                  )}
+                  MetaMask
+                </Button>
+                
+                <Button 
+                  className="w-full justify-start mb-2" 
+                  variant="outline" 
+                  disabled={true}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  HashPack (Coming Soon)
+                </Button>
+                
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline" 
+                  disabled={true}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Blade Wallet (Coming Soon)
+                </Button>
+                
+                {walletError && (
+                  <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+                    {walletError}
+                  </div>
+                )}
               </div>
-            </>
-          )}
-
-          {/* Wallet connection options */}
-          <div className="space-y-4">
-            {walletAvailability.metamask && (
-              <button
-                type="button"
-                onClick={connectMetaMask}
-                disabled={isConnecting}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-70"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" 
-                    alt="MetaMask" 
-                    className="h-5 w-5"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/default-wallet-logo.png';
-                    }}
-                  />
-                </span>
-                {isConnecting ? "Connecting..." : "Connect with MetaMask"}
-              </button>
-            )}
-            
-            <button
-              type="button"
-              onClick={connectHashPack}
-              disabled={isConnecting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70"
-            >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <img 
-                  src="https://www.hashpack.app/img/logo.svg" 
-                  alt="HashPack" 
-                  className="h-5 w-5"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/default-wallet-logo.png';
-                  }}
-                />
-              </span>
-              {isConnecting ? "Connecting..." : "Connect with HashPack (Coming Soon)"}
-            </button>
-            
-            <button
-              type="button"
-              onClick={connectBlade}
-              disabled={isConnecting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-70"
-            >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <Wallet className="h-5 w-5 text-white" />
-              </span>
-              {isConnecting ? "Connecting..." : "Connect with Blade (Coming Soon)"}
-            </button>
-          </div>
-          
-          {/* Toggle between signup and login */}
-          <div className="flex items-center justify-center">
-            <div className="text-sm text-center">
-              {authMode === "signup" ? (
-                <p className="text-[#B2B9E1]">
-                  Already have an account?{" "}
-                  <button 
-                    onClick={() => setAuthMode("login")}
-                    className="font-medium text-pink-300 hover:text-pink-400"
-                  >
-                    Log in
-                  </button>
-                </p>
-              ) : (
-                <p className="text-[#B2B9E1]">
-                  Don't have an account?{" "}
-                  <button 
-                    onClick={() => setAuthMode("signup")}
-                    className="font-medium text-pink-300 hover:text-pink-400"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              )}
             </div>
-          </div>
+          </Tabs>
         </div>
         
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[#B2B9E1]">
-            By connecting your wallet, you agree to our{" "}
-            <a href="#" className="text-pink-300 hover:text-pink-400">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-pink-300 hover:text-pink-400">
-              Privacy Policy
-            </a>
-          </p>
+        <div className="hidden lg:block">
+          <div className={`rounded-xl p-8 ${
+            theme === 'dark' 
+              ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974] border' 
+              : 'bg-blue-50'
+          }`}>
+            <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Why Join HerBid?
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>01</span>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Join the Platform
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                    Create your business profile and showcase your skills, expertise, and past work samples.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>02</span>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Form a Consortium
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                    Connect with complementary businesses to create a verified legal consortium for bidding.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-blue-800' : 'bg-blue-100'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-blue-200' : 'text-blue-700'}>03</span>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Access Opportunities
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                    Browse curated contract opportunities or receive AI-matched recommendations.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>04</span>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Submit Collective Bids
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                    Use automated proposal generation with compliance verification for tenders.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>05</span>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Secure Work & Payments
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                    Win contracts and receive milestone-based payments via secure escrow system.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
