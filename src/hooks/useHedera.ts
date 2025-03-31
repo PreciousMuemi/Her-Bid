@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import {
   Client, AccountId, PrivateKey, TransferTransaction, 
-  Hbar, TransactionReceiptQuery
+  Hbar, TransactionReceiptQuery, ContractCreateTransaction,
+  ContractFunctionParameters, ContractCallQuery, FileCreateTransaction,
+  FileAppendTransaction
 } from "@hashgraph/sdk";
 import { toast } from "sonner";
 
@@ -16,7 +17,6 @@ export const useHedera = () => {
   const [error, setError] = useState<string | null>(null);
   const [ethProvider, setEthProvider] = useState<ethers.providers.Web3Provider | null>(null);
   
-  // Initialize from localStorage on component mount
   useEffect(() => {
     const storedAccountId = localStorage.getItem("hederaAccount");
     const storedEthAddress = localStorage.getItem("metamaskAddress");
@@ -31,7 +31,6 @@ export const useHedera = () => {
     }
   }, []);
 
-  // Connect to MetaMask
   const connectMetaMask = async (): Promise<boolean> => {
     try {
       setLoading(true);
@@ -41,14 +40,12 @@ export const useHedera = () => {
         return false;
       }
 
-      // First, try to switch to Hedera network
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x128" }], // Hedera testnet in hex
+          params: [{ chainId: "0x128" }],
         });
       } catch (switchError: any) {
-        // This error code means the chain has not been added to MetaMask
         if (switchError.code === 4902) {
           try {
             await window.ethereum.request({
@@ -81,11 +78,9 @@ export const useHedera = () => {
         }
       }
 
-      // Create provider
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       setEthProvider(provider);
       
-      // Request accounts
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
@@ -96,7 +91,6 @@ export const useHedera = () => {
         localStorage.setItem("metamaskAddress", address);
         
         try {
-          // Try to get Hedera Account ID from Mirror Node API
           const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts?evm-address=${address}`);
           const data = await response.json();
           
@@ -106,7 +100,6 @@ export const useHedera = () => {
             localStorage.setItem("hederaAccount", hederaAccountId);
             setIsConnected(true);
             
-            // Get balance
             await fetchAccountBalance(hederaAccountId);
             
             toast.success("Connected to MetaMask successfully");
@@ -115,7 +108,6 @@ export const useHedera = () => {
           } else {
             console.log("No Hedera account found for this EVM address. Will be auto-created on first transaction.");
             
-            // We'll use the EVM address as a placeholder
             setAccountId(`EVM: ${address}`);
             localStorage.setItem("hederaAccount", `EVM: ${address}`);
             setIsConnected(true);
@@ -126,7 +118,6 @@ export const useHedera = () => {
           }
         } catch (error) {
           console.error("Error fetching account from mirror node:", error);
-          // Continue even if mirror node fails - account might be auto-created later
           setAccountId(`EVM: ${address}`);
           localStorage.setItem("hederaAccount", `EVM: ${address}`);
           setIsConnected(true);
@@ -146,7 +137,6 @@ export const useHedera = () => {
     }
   };
 
-  // Disconnect from wallet
   const disconnectMetaMask = () => {
     localStorage.removeItem("metamaskAddress");
     localStorage.removeItem("hederaAccount");
@@ -158,12 +148,10 @@ export const useHedera = () => {
     toast.info("Disconnected from MetaMask");
   };
 
-  // Connect to Hedera using your operator account
   const connectToHedera = async (operatorId?: string, operatorKey?: string) => {
     try {
       setLoading(true);
       
-      // Use provided credentials or environment variables
       const accountId = operatorId || import.meta.env.VITE_ACCOUNT_ID;
       const privateKey = operatorKey || import.meta.env.VITE_PRIVATE_KEY;
       
@@ -177,7 +165,6 @@ export const useHedera = () => {
       localStorage.setItem("hederaAccount", accountId);
       setIsConnected(true);
       
-      // Get balance
       await fetchAccountBalance(accountId);
       
       toast.success("Connected to Hedera successfully");
@@ -191,7 +178,6 @@ export const useHedera = () => {
     }
   };
 
-  // Disconnect from Hedera
   const disconnectFromHedera = () => {
     localStorage.removeItem("hederaAccount");
     localStorage.removeItem("isAuthenticated");
@@ -201,19 +187,16 @@ export const useHedera = () => {
     toast.info("Disconnected from Hedera");
   };
 
-  // Get account balance
   const fetchAccountBalance = async (id: string) => {
     try {
       setLoading(true);
       
-      // Skip if using EVM address without known Hedera account yet
       if (id.startsWith("EVM:")) {
         setBalance("0");
         setLoading(false);
         return "0";
       }
       
-      // Initialize client
       const operatorId = import.meta.env.VITE_ACCOUNT_ID;
       const operatorKey = import.meta.env.VITE_PRIVATE_KEY;
       
@@ -227,7 +210,7 @@ export const useHedera = () => {
       const client = Client.forTestnet();
       client.setOperator(AccountId.fromString(operatorId), PrivateKey.fromString(operatorKey));
       
-      const balanceQuery = await client.getAccountBalance(AccountId.fromString(id));
+      const balanceQuery = await new AccountId(id).getBalance(client);
       const balanceHbar = balanceQuery.hbars.toString();
       setBalance(balanceHbar);
       setLoading(false);
@@ -240,12 +223,10 @@ export const useHedera = () => {
     }
   };
 
-  // Send HBAR to a MetaMask wallet
   const sendHbarToMetaMask = async (toAddress: string, amount: number): Promise<string> => {
     try {
       setLoading(true);
       
-      // Initialize client
       const operatorId = import.meta.env.VITE_ACCOUNT_ID;
       const operatorKey = import.meta.env.VITE_PRIVATE_KEY;
       
@@ -259,7 +240,6 @@ export const useHedera = () => {
         PrivateKey.fromString(operatorKey)
       );
 
-      // Create the transfer transaction
       const transferHbarTransaction = new TransferTransaction()
         .addHbarTransfer(AccountId.fromString(operatorId), new Hbar(-amount))
         .addHbarTransfer(AccountId.fromEvmAddress(0, 0, toAddress), new Hbar(amount))
@@ -271,20 +251,17 @@ export const useHedera = () => {
       
       const transferHbarTransactionResponse = await transferHbarTransactionSigned.execute(client);
       
-      // Get the transaction receipt and check for child receipts (for auto-created accounts)
       const transactionReceipt = await new TransactionReceiptQuery()
         .setTransactionId(transferHbarTransactionResponse.transactionId)
         .setIncludeChildren(true)
         .execute(client);
 
-      // If there's a child receipt, a new account was created
       if (transactionReceipt.children && transactionReceipt.children.length > 0) {
         const childReceipt = transactionReceipt.children[0];
         if (childReceipt.accountId) {
           const newAccountId = childReceipt.accountId.toString();
           console.log(`New account created: ${newAccountId}`);
           
-          // Update our state if this was our own account
           if (ethAddress === toAddress) {
             setAccountId(newAccountId);
             localStorage.setItem("hederaAccount", newAccountId);
@@ -292,7 +269,6 @@ export const useHedera = () => {
         }
       }
 
-      // Refresh balance after transfer
       if (accountId) {
         await fetchAccountBalance(accountId);
       }
@@ -307,7 +283,68 @@ export const useHedera = () => {
     }
   };
 
-  // Refresh the current account balance
+  const deployContract = async (bytecode: string, gasLimit: number = 100000): Promise<string> => {
+    try {
+      setLoading(true);
+      
+      const operatorId = import.meta.env.VITE_ACCOUNT_ID;
+      const operatorKey = import.meta.env.VITE_PRIVATE_KEY;
+      
+      if (!operatorId || !operatorKey) {
+        throw new Error("Environment variables for Hedera are missing");
+      }
+      
+      const client = Client.forTestnet();
+      client.setOperator(
+        AccountId.fromString(operatorId),
+        PrivateKey.fromString(operatorKey)
+      );
+
+      const fileCreateTx = new FileCreateTransaction()
+        .setKeys([PrivateKey.fromString(operatorKey)])
+        .freezeWith(client);
+      
+      const fileCreateSign = await fileCreateTx.sign(PrivateKey.fromString(operatorKey));
+      const fileCreateSubmit = await fileCreateSign.execute(client);
+      const fileCreateRx = await fileCreateSubmit.getReceipt(client);
+      const bytecodeFileId = fileCreateRx.fileId;
+      
+      console.log(`- The bytecode file ID is: ${bytecodeFileId}`);
+      
+      const fileAppendTx = new FileAppendTransaction()
+        .setFileId(bytecodeFileId!)
+        .setContents(bytecode)
+        .setMaxChunks(10)
+        .freezeWith(client);
+      
+      const fileAppendSign = await fileAppendTx.sign(PrivateKey.fromString(operatorKey));
+      const fileAppendSubmit = await fileAppendSign.execute(client);
+      await fileAppendSubmit.getReceipt(client);
+      
+      console.log(`- Content added to file`);
+      
+      const contractCreateTx = new ContractCreateTransaction()
+        .setBytecodeFileId(bytecodeFileId!)
+        .setGas(gasLimit)
+        .freezeWith(client);
+      
+      const contractCreateSign = await contractCreateTx.sign(PrivateKey.fromString(operatorKey));
+      const contractCreateSubmit = await contractCreateSign.execute(client);
+      const contractCreateRx = await contractCreateSubmit.getReceipt(client);
+      const contractId = contractCreateRx.contractId;
+      
+      console.log(`- The smart contract ID is: ${contractId}`);
+      
+      setLoading(false);
+      return contractId ? contractId.toString() : "";
+    } catch (error) {
+      console.error("Error deploying contract:", error);
+      setError("Failed to deploy contract");
+      setLoading(false);
+      throw error;
+    }
+  };
+
   const refreshBalance = async () => {
     if (accountId) {
       return fetchAccountBalance(accountId);
@@ -329,6 +366,7 @@ export const useHedera = () => {
     disconnectFromHedera,
     fetchAccountBalance,
     refreshBalance,
-    sendHbarToMetaMask
+    sendHbarToMetaMask,
+    deployContract
   };
 };
