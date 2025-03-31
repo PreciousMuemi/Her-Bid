@@ -8,7 +8,7 @@ type HederaContextType = {
   client: Client | null;
   isConnected: boolean;
   accountId: string;
-  connectToHedera: (operatorId: string, operatorKey: string) => void;
+  connectToHedera: (operatorId?: string, operatorKey?: string) => void;
   disconnectFromHedera: () => void;
   // MetaMask connection
   ethAddress: string;
@@ -28,22 +28,30 @@ export const HederaProvider = ({ children }: { children: ReactNode }) => {
   const [ethAddress, setEthAddress] = useState<string>("");
   const [ethProvider, setEthProvider] = useState<ethers.providers.Web3Provider | null>(null);
 
-  const connectToHedera = (operatorId: string, operatorKey: string) => {
+  const connectToHedera = (operatorId?: string, operatorKey?: string) => {
     try {
-      if (!operatorId || !operatorKey) {
-        toast.error("Operator ID and Private Key are required");
+      // Try to use provided credentials or environment variables
+      const accountId = operatorId || import.meta.env.VITE_ACCOUNT_ID;
+      const privateKey = operatorKey || import.meta.env.VITE_PRIVATE_KEY;
+      const network = import.meta.env.VITE_NETWORK || "testnet";
+
+      if (!accountId || !privateKey) {
+        toast.error("Hedera credentials are required but not provided");
         return;
       }
 
-      // Initialize client - using testnet by default
-      const hederaClient = Client.forTestnet();
-      hederaClient.setOperator(AccountId.fromString(operatorId), PrivateKey.fromString(operatorKey));
+      // Initialize client based on network setting
+      const hederaClient = network === "mainnet"
+        ? Client.forMainnet()
+        : Client.forTestnet();
+      
+      hederaClient.setOperator(AccountId.fromString(accountId), PrivateKey.fromString(privateKey));
       
       setClient(hederaClient);
-      setAccountId(operatorId);
+      setAccountId(accountId);
       setIsConnected(true);
       
-      toast.success("Connected to Hedera Testnet");
+      toast.success(`Connected to Hedera ${network}`);
     } catch (error) {
       console.error("Error connecting to Hedera:", error);
       toast.error("Failed to connect to Hedera");

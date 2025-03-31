@@ -29,10 +29,8 @@ const simpleStorageAbi = [
   }
 ];
 
-// This would be the deployed contract address on Hedera
-// For demonstration, we're using a placeholder
-// In a real application, you would deploy the contract and use its address
-const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
+// Get contract address from environment variable or use fallback
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
 
 export const getSimpleStorageContract = (provider: ethers.providers.Web3Provider) => {
   try {
