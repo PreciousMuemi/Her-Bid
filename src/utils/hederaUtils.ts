@@ -5,9 +5,16 @@ import {
   AccountCreateTransaction,
   Hbar,
   AccountBalanceQuery,
-  TransferTransaction,
+  // TransferTransaction,
   TransactionReceipt,
-  AccountId
+  AccountId,
+  TokenCreateTransaction,
+  TokenType,
+  TokenSupplyType,
+  TokenAssociateTransaction,
+  TransferTransaction,
+  TokenInfoQuery
+
 } from "@hashgraph/sdk";
 
 // Helper function to initialize a Hedera client from environment variables
@@ -119,6 +126,120 @@ export const createAccount = async (
     };
   } catch (error) {
     console.error("Error creating account:", error);
+    throw error;
+  }
+};
+
+// Create a fungible token (could be used for escrow payments)
+export const createFungibleToken = async (
+  client,
+  name,
+  symbol,
+  initialSupply,
+  decimals = 2,
+  treasuryAccountId,
+  treasuryKey
+) => {
+  try {
+    const transaction = await new TokenCreateTransaction()
+      .setTokenName(name)
+      .setTokenSymbol(symbol)
+      .setTokenType(TokenType.FungibleCommon)
+      .setDecimals(decimals)
+      .setInitialSupply(initialSupply)
+      .setTreasuryAccountId(treasuryAccountId)
+      .setSupplyType(TokenSupplyType.Infinite)
+      .setSupplyKey(treasuryKey)
+      .setAdminKey(treasuryKey)
+      .freezeWith(client);
+
+    const signTx = await transaction.sign(treasuryKey);
+    const txResponse = await signTx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    return receipt.tokenId.toString();
+  } catch (error) {
+    console.error("Error creating token:", error);
+    throw error;
+  }
+};
+
+// Create a non-fungible token (for reputation badges or credentials)
+export const createNFTCollection = async (
+  client,
+  name,
+  symbol,
+  treasuryAccountId,
+  treasuryKey
+) => {
+  try {
+    const transaction = await new TokenCreateTransaction()
+      .setTokenName(name)
+      .setTokenSymbol(symbol)
+      .setTokenType(TokenType.NonFungibleUnique)
+      .setTreasuryAccountId(treasuryAccountId)
+      .setSupplyType(TokenSupplyType.Infinite)
+      .setSupplyKey(treasuryKey)
+      .setAdminKey(treasuryKey)
+      .freezeWith(client);
+
+    const signTx = await transaction.sign(treasuryKey);
+    const txResponse = await signTx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    return receipt.tokenId.toString();
+  } catch (error) {
+    console.error("Error creating NFT collection:", error);
+    throw error;
+  }
+};
+
+// Associate a token with an account (required before receiving tokens)
+export const associateTokenWithAccount = async (
+  client,
+  accountId,
+  privateKey,
+  tokenId
+) => {
+  try {
+    const transaction = await new TokenAssociateTransaction()
+      .setAccountId(accountId)
+      .setTokenIds([tokenId])
+      .freezeWith(client);
+
+    const signTx = await transaction.sign(privateKey);
+    const txResponse = await signTx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    return receipt.status.toString();
+  } catch (error) {
+    console.error("Error associating token:", error);
+    throw error;
+  }
+};
+
+// Transfer tokens between accounts
+export const transferTokens = async (
+  client,
+  tokenId,
+  senderAccountId,
+  senderPrivateKey,
+  receiverAccountId,
+  amount
+) => {
+  try {
+    const transaction = await new TransferTransaction()
+      .addTokenTransfer(tokenId, senderAccountId, -amount)
+      .addTokenTransfer(tokenId, receiverAccountId, amount)
+      .freezeWith(client);
+
+    const signTx = await transaction.sign(senderPrivateKey);
+    const txResponse = await signTx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    return receipt.status.toString();
+  } catch (error) {
+    console.error("Error transferring tokens:", error);
     throw error;
   }
 };
