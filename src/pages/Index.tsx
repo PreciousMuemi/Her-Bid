@@ -1,11 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/layout/Hero";
 import Features from "@/components/layout/Features";
 import HowItWorks from "@/components/layout/HowItWorks";
-import Footer from "@/components/layout/Footer";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { useThemeStore } from "@/store/themeStore";
 import { Button } from "@/components/ui/button";
@@ -28,8 +26,6 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${theme === 'dark' ? 'bg-[#050A30] text-white' : ''}`}>
-      <Navbar />
-      
       <main className="flex-grow">
         <Hero />
         <Features />
@@ -52,32 +48,18 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-3 mt-4">
             <Button 
               variant="outline" 
-              onClick={() => navigate('/hedera')}
+              onClick={() => navigate('/auth')}
               className={`${
                 theme === 'dark'
                   ? 'border-purple-400/30 text-purple-300 hover:bg-purple-500/20'
                   : 'border-primary/30 text-primary hover:bg-primary/10'
               }`}
             >
-              Explore Hedera Integration
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/metamask')}
-              className={`${
-                theme === 'dark'
-                  ? 'border-blue-400/30 text-blue-300 hover:bg-blue-500/20'
-                  : 'border-blue-500/30 text-blue-600 hover:bg-blue-500/10'
-              }`}
-            >
-              Try MetaMask Connection
+              Learn More
             </Button>
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

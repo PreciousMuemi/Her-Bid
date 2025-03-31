@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -25,4 +26,8 @@ export default defineConfig(({ mode }) => ({
       buffer: "buffer",
     },
   },
+  // Define additional environment variables if needed
+  define: {
+    'process.env': {},
+  }
 }));

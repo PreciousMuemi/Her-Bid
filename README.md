@@ -1,69 +1,96 @@
-# Welcome to your Lovable project
 
-## Project info
+# HerBid - Blockchain-Powered Consortium Platform
 
-**URL**: https://lovable.dev/projects/2166c7ed-9793-4ad4-a811-0000a8cdd522
+HerBid is a platform that enables women-led businesses to form consortiums, bid on contracts together, and manage payments securely using Hedera blockchain technology.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **User Authentication**: Connect with Hedera wallets (MetaMask, HashPack, Blade)
+- **Consortium Creation**: Form legal consortiums with other businesses
+- **Token Management**: Create and manage tokens for your consortium
+- **Escrow System**: Secure milestone-based payments
+- **Smart Contract Integration**: Interact with Hedera smart contracts
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2166c7ed-9793-4ad4-a811-0000a8cdd522) and start prompting.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example`:
+   ```
+   VITE_ACCOUNT_ID=your_hedera_account_id
+   VITE_PRIVATE_KEY=your_hedera_private_key
+   VITE_NETWORK=testnet
+   VITE_CONTRACT_ADDRESS=your_contract_address
+   VITE_USER_REGISTRY_CONTRACT=your_user_registry_contract
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+## Technologies Used
 
-**Use your preferred IDE**
+- React with Vite
+- Typescript
+- Tailwind CSS
+- Hedera Hashgraph
+- Ethers.js
+- @hashgraph/sdk
+- HashConnect
+- Blade Wallet
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Smart Contracts
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### User Registry Contract
 
-Follow these steps:
+The platform uses a UserRegistry smart contract to store and manage user profiles. This contract handles:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- User registration with business profiles
+- User verification
+- Profile retrieval
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Deployment
 
-# Step 3: Install the necessary dependencies.
-npm i
+To deploy the contract:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Use the Hedera Smart Contract Service
+2. Update the contract address in your .env file
+3. Set VITE_USER_REGISTRY_CONTRACT to your deployed contract address
+
+## Project Structure
+
+```
+src/
+├── components/      # UI components
+├── contexts/        # React context providers
+├── contracts/       # Solidity smart contracts
+├── hooks/           # Custom React hooks
+├── pages/           # Application pages
+├── store/           # State management
+└── utils/           # Utility functions
 ```
 
-**Edit a file directly in GitHub**
+## Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file in the root of your project with the following variables:
 
-**Use GitHub Codespaces**
+```
+VITE_ACCOUNT_ID=0.0.XXXXX        # Your Hedera account ID
+VITE_PRIVATE_KEY=302e...         # Your Hedera private key
+VITE_NETWORK=testnet             # 'testnet' or 'mainnet'
+VITE_CONTRACT_ADDRESS=0x...      # Your deployed contract address
+VITE_USER_REGISTRY_CONTRACT=0x... # Your user registry contract address
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Contributing
 
-## What technologies are used for this project?
+1. Fork the repository
+2. Create a branch for your feature
+3. Submit a pull request
 
-This project is built with .
+## License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/2166c7ed-9793-4ad4-a811-0000a8cdd522) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+This project is licensed under the MIT License.

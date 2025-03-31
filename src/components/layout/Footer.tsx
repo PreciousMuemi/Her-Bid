@@ -1,109 +1,174 @@
 
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Instagram } from 'lucide-react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useThemeStore } from "@/store/themeStore";
+import { Github, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-  
+  const navigate = useNavigate();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+
   return (
-    <footer id="contact" className="bg-primary text-primary-foreground pt-16 pb-8">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-12">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold">Her<span className="text-secondary">Bid</span></h3>
-            <p className="text-primary-foreground/80 max-w-xs">
-              Transforming how women access large contracts by combining collective bidding, 
-              secure payments, and skill validation.
+    <footer className={`w-full ${isDark ? 'bg-[#0A155A] text-white' : 'bg-gray-50 text-gray-800'} mt-auto`}>
+      <div className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="md:col-span-1">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+              HerBid
+            </h3>
+            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Empowering women-led businesses through blockchain-powered consortium building and bidding.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors" aria-label="Twitter">
-                <Twitter size={20} />
+            <div className="flex space-x-4 mt-4">
+              <a href="#" className={`text-gray-400 hover:${isDark ? 'text-pink-400' : 'text-purple-600'}`}>
+                <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors" aria-label="LinkedIn">
-                <Linkedin size={20} />
+              <a href="#" className={`text-gray-400 hover:${isDark ? 'text-pink-400' : 'text-purple-600'}`}>
+                <Github className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors" aria-label="Facebook">
-                <Facebook size={20} />
+              <a href="#" className={`text-gray-400 hover:${isDark ? 'text-pink-400' : 'text-purple-600'}`}>
+                <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors" aria-label="Instagram">
-                <Instagram size={20} />
+              <a href="#" className={`text-gray-400 hover:${isDark ? 'text-pink-400' : 'text-purple-600'}`}>
+                <Linkedin className="h-5 w-5" />
               </a>
             </div>
           </div>
           
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Quick Links</h4>
+          <div>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+              Platform
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-primary-foreground/80 hover:text-secondary transition-colors">Home</Link>
+                <button
+                  onClick={() => navigate('/create-consortium')}
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Create Consortium
+                </button>
               </li>
               <li>
-                <Link to="#features" className="text-primary-foreground/80 hover:text-secondary transition-colors">Features</Link>
+                <button
+                  onClick={() => navigate('/manage-escrow')}
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Manage Escrow
+                </button>
               </li>
               <li>
-                <Link to="#how-it-works" className="text-primary-foreground/80 hover:text-secondary transition-colors">How It Works</Link>
-              </li>
-              <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">About Us</Link>
-              </li>
-              <li>
-                <Link to="#contact" className="text-primary-foreground/80 hover:text-secondary transition-colors">Contact</Link>
+                <button
+                  onClick={() => navigate('/token-management')}
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Token Management
+                </button>
               </li>
             </ul>
           </div>
           
-          {/* Resources */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Resources</h4>
+          <div>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+              Resources
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">Success Stories</Link>
-              </li>
-              <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">Blog</Link>
-              </li>
-              <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">FAQ</Link>
-              </li>
-              <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">Support</Link>
-              </li>
-              <li>
-                <Link to="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">Privacy Policy</Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Contact Info */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Contact Us</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <MapPin size={20} className="flex-shrink-0 mt-1 text-secondary" />
-                <span className="text-primary-foreground/80">123 Business Avenue, City, Country</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={20} className="flex-shrink-0 text-secondary" />
-                <a href="mailto:contact@herbid.com" className="text-primary-foreground/80 hover:text-secondary transition-colors">
-                  contact@herbid.com
+                <a
+                  href="https://docs.hedera.com/guides"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Hedera Documentation
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone size={20} className="flex-shrink-0 text-secondary" />
-                <a href="tel:+1234567890" className="text-primary-foreground/80 hover:text-secondary transition-colors">
-                  +1 (234) 567-890
+              <li>
+                <a
+                  href="https://metamask.io/faqs/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  MetaMask Guide
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Consortium Building Guide
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+              Company
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="#"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`text-sm ${isDark ? 'text-gray-300 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Terms of Service
                 </a>
               </li>
             </ul>
           </div>
         </div>
         
-        <div className="pt-8 border-t border-primary-foreground/20 text-center">
-          <p className="text-sm text-primary-foreground/60">
-            &copy; {currentYear} HerBid. All rights reserved.
+        <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} mt-8 pt-6 flex flex-col md:flex-row justify-between items-center`}>
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            &copy; {new Date().getFullYear()} HerBid. All rights reserved.
           </p>
+          <div className="mt-4 md:mt-0">
+            <ul className="flex space-x-6">
+              <li>
+                <a
+                  href="#"
+                  className={`text-xs ${isDark ? 'text-gray-400 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`text-xs ${isDark ? 'text-gray-400 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  Terms
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`text-xs ${isDark ? 'text-gray-400 hover:text-pink-300' : 'text-gray-600 hover:text-purple-600'}`}
+                >
+                  FAQ
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </footer>

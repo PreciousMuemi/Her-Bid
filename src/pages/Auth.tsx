@@ -2,15 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Sparkles, User, Key, Wallet, AlertTriangle } from "lucide-react";
 import { ethers } from "ethers";
-import axios from "axios";
+import { toast } from "sonner";
 import { HashConnect } from "hashconnect";
 import { BladeConnector } from "@bladelabs/blade-web3.js";
-
-// Environment configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://your-api.example.com";
-const APP_NAME = "HerBid";
-const APP_DESCRIPTION = "Your DApp Description";
-const APP_LOGO_URL = "https://your-app.com/logo.png";
+import { useHedera } from "../contexts/HederaContext";
+import { checkUserExistsEth, registerUserEth, checkUserExistsHedera, registerUserHedera } from "../utils/userRegistryUtils";
 
 // Type definitions
 type WalletType = "metamask" | "hashpack" | "blade";
@@ -21,8 +17,14 @@ type ConnectionInfo = {
   walletType: WalletType | null;
 };
 
+// Environment configuration
+const APP_NAME = "HerBid";
+const APP_DESCRIPTION = "Consortium bidding platform for women-led businesses";
+const APP_LOGO_URL = "https://your-app.com/logo.png";
+
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { client, connectToHedera } = useHedera();
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -156,18 +158,95 @@ const AuthPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Authenticate with smart contract
+  const authenticateWithSmartContract = async (
+    accountId: string,
+    walletType: WalletType,
+    provider?: ethers.providers.Web3Provider
+  ) => {
+    try {
+      setIsConnecting(true);
+      setWalletError(null);
+      
+      let userExists = false;
+      
+      // Check if user exists based on wallet type
+      if (walletType === 'metamask' && provider) {
+        userExists = await checkUserExistsEth(provider, accountId);
+      } else if (client) {
+        userExists = await checkUserExistsHedera(client, accountId);
+      } else {
+        throw new Error("No client available for authentication");
+      }
+      
+      // Validate based on auth mode
+      if (authMode === "signup" && userExists) {
+        toast.error("Account already registered. Please log in instead.");
+        setAuthMode("login");
+        setIsConnecting(false);
+        return;
+      }
+      
+      if (authMode === "login" && !userExists) {
+        toast.error("Account not registered. Please sign up first.");
+        setAuthMode("signup");
+        setIsConnecting(false);
+        return;
+      }
+      
+      // For signup, register the user
+      if (authMode === "signup") {
+        if (walletType === 'metamask' && provider) {
+          await registerUserEth(provider, formData);
+        } else if (client) {
+          await registerUserHedera(client, accountId, formData);
+        } else {
+          throw new Error("No client available for registration");
+        }
+        toast.success("Account registered successfully!");
+      } else {
+        toast.success("Login successful!");
+      }
+      
+      // Store authentication state
+      localStorage.setItem("hederaAccount", accountId);
+      localStorage.setItem("walletType", walletType);
+      localStorage.setItem("isAuthenticated", "true");
+      
+      // For signup, store profile data locally too
+      if (authMode === "signup") {
+        localStorage.setItem("userProfile", JSON.stringify(formData));
+      }
+      
+      // Connect to Hedera context if not already connected
+      if (!client) {
+        connectToHedera();
+      }
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+      setWalletError(error.message || "Authentication failed");
+      toast.error(error.message || "Authentication failed");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   // Connect with MetaMask
   const connectMetaMask = async () => {
-    setIsConnecting(true);
-    setWalletError(null);
+    if (!window.ethereum) {
+      setWalletError("MetaMask not installed");
+      return;
+    }
     
     try {
-      if (!window.ethereum) {
-        throw new Error("MetaMask not installed");
-      }
-
+      setIsConnecting(true);
+      setWalletError(null);
+      
       const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      const hederaChainId = "0x128";
+      const hederaChainId = "0x128"; // Hedera testnet
       
       // Check and switch to Hedera Testnet
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
@@ -214,8 +293,7 @@ const AuthPage = () => {
         walletType: "metamask"
       });
       
-      await authenticateWithBackend(selectedAccount, signature, message, "metamask");
-      navigate("/dashboard");
+      await authenticateWithSmartContract(selectedAccount, "metamask", provider);
     } catch (error: any) {
       console.error("MetaMask connection error:", error);
       setWalletError(error.message || "Failed to connect MetaMask");
@@ -237,41 +315,13 @@ const AuthPage = () => {
       
       if (hashConnectData.pairingData) {
         const accountId = hashConnectData.pairingData.accountIds[0];
-        await authenticateWithHashPack(accountId);
+        await authenticateWithSmartContract(accountId, "hashpack");
       } else {
         hashConnect.connectToLocalWallet(hashConnectData.pairingString);
       }
     } catch (error: any) {
       console.error("HashPack connection error:", error);
       setWalletError(error.message || "Failed to connect HashPack");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Authenticate with HashPack
-  const authenticateWithHashPack = async (accountId: string) => {
-    try {
-      setIsConnecting(true);
-      
-      if (!hashConnect) throw new Error("HashConnect not initialized");
-      
-      const message = `Welcome to ${APP_NAME}! Please sign this message to verify your account. Nonce: ${Date.now()}`;
-      const signer = hashConnect.getSigner(accountId);
-      const signature = await signer.sign([new Uint8Array(Buffer.from(message))]);
-      
-      setConnectionInfo({
-        accountId,
-        provider: hashConnect,
-        network: "testnet",
-        walletType: "hashpack"
-      });
-      
-      await authenticateWithBackend(accountId, signature.toString('hex'), message, "hashpack");
-      navigate("/dashboard");
-    } catch (error: any) {
-      console.error("HashPack authentication error:", error);
-      setWalletError(error.message || "Failed to authenticate with HashPack");
     } finally {
       setIsConnecting(false);
     }
@@ -301,38 +351,12 @@ const AuthPage = () => {
         walletType: "blade"
       });
       
-      await authenticateWithBackend(accountId, signResult.signature, message, "blade");
-      navigate("/dashboard");
+      await authenticateWithSmartContract(accountId, "blade");
     } catch (error: any) {
       console.error("Blade connection error:", error);
       setWalletError(error.message || "Failed to connect Blade Wallet");
     } finally {
       setIsConnecting(false);
-    }
-  };
-
-  // Authenticate with backend API
-  const authenticateWithBackend = async (
-    accountId: string,
-    signature: string,
-    message: string,
-    walletType: WalletType
-  ) => {
-    try {
-      const endpoint = authMode === "signup" ? "/register" : "/login";
-      const payload = authMode === "signup" 
-        ? { accountId, signature, message, walletType, profile: formData }
-        : { accountId, signature, message, walletType };
-      
-      const response = await axios.post(`${API_BASE_URL}/auth${endpoint}`, payload);
-      
-      localStorage.setItem("accessToken", response.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-      
-      return response.data;
-    } catch (error: any) {
-      console.error("Backend authentication error:", error);
-      throw new Error(error.response?.data?.message || "Authentication failed");
     }
   };
 
