@@ -23,7 +23,7 @@ const Index = () => {
   }, []);
 
   const handleGetStarted = () => {
-    navigate('/dashboard');
+    navigate('/auth');
   };
 
   return (
