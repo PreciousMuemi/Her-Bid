@@ -3,7 +3,7 @@
 
 ![HerBid Logo](public/og-image.png)
 
-## 🌟 Mission
+## 🌟 Our Mission
 
 HerBid creates a secure platform where women-owned businesses can team up, win contracts together, and get paid fairly using blockchain technology.
 
@@ -20,54 +20,35 @@ HerBid solves these problems by creating a trustworthy platform where women entr
 ## 💪 Core Features
 
 ### Team Up Engine
-- Form verified teams with complementary skills
-- Find partners based on skill matching
-- Create legal consortium agreements with fair terms
+- Find partners with complementary skills
+- Form verified teams with fair terms
+- Apply for contracts together
 
 ### Secure Payment Protection
-- Pre-funded escrow accounts on Hedera blockchain
-- Milestone-based payment releases
-- Independent verification triggers payments
+- Pre-funded milestone payments held safely
+- Get paid as you complete each project phase
 - No more chasing late invoices
 
 ### Business Reputation System
-- Verifiable blockchain-based reputation
-- Skill validation from actual contract work
-- Performance history that travels with your business
+- Build credibility with each successful project
+- Showcase your skills and past work
+- Gain visibility with clients seeking diverse suppliers
+
+## 🎯 For Women Entrepreneurs
+
+HerBid makes it easy to:
+1. **Connect** with other women-owned businesses
+2. **Collaborate** on contracts that would be too large for a single business
+3. **Get paid securely** through milestone-based payments
+4. **Build a reputation** that helps you win more work
 
 ## 🚀 Getting Started
 
-### For Users
 1. Create your account and verify your women-owned business status
 2. Build your business profile with your skills and portfolio
 3. Browse available contracts or team up with other businesses
 4. Apply for contracts together or find partners for opportunities
 5. Manage projects and payments securely through the platform
-
-### For Developers
-
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/herbid.git
-   cd herbid
-   ```
-
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env` file based on `.env.example`:
-   ```
-   VITE_ACCOUNT_ID=your_hedera_account_id
-   VITE_PRIVATE_KEY=your_hedera_private_key
-   VITE_NETWORK=testnet
-   ```
-
-4. Run the development server
-   ```bash
-   npm run dev
-   ```
 
 ## 🛠️ Technologies
 
@@ -77,42 +58,51 @@ HerBid solves these problems by creating a trustworthy platform where women entr
 - **Authentication**: Hedera wallet integration
 - **State Management**: TanStack Query, Zustand
 
-## 🔥 Pitch Deck Highlights
+## 📊 Market Opportunity
 
-### Problem
-Women-owned businesses are systematically excluded from large contracts due to size limitations and collateral requirements.
-
-### Solution
-HerBid connects complementary women-owned businesses to team up, compete for larger contracts, and protect payments through blockchain technology.
-
-### Market
 - 13 million women-owned businesses in the US alone
 - $500 billion annual government contracts market
 - Growing focus on diverse supplier requirements
+- Increasing demand for collaborative procurement solutions
 
-### Traction
-- 500+ verified women-owned businesses (projected)
-- 50+ successful contract collaborations (projected)
-- $5M+ in secured payments through our platform (projected)
+## 💰 Business Model
 
-### Revenue Model
 - 1% platform fee on successful contract payments
-- Premium business profiles for enhanced visibility
-- Verification services for women-owned business status
+- Premium business verification services
+- Enterprise integration for corporations seeking diverse suppliers
 
-## 📊 Impact Metrics
+## 🔍 The Problem We're Solving
 
-- **Economic**: Increased contract win rates for women-owned businesses
-- **Social**: More diverse supplier representation in procurement
-- **Financial**: Faster, more secure payments for contract work
-- **Innovation**: New collaborative ventures between businesses
+**Meet Sarah** – She runs a small marketing agency with 3 employees. She's highly skilled but struggles to win government contracts because:
+- She doesn't have the capacity to handle large projects alone
+- She lacks the past performance record for complex RFPs
+- She's concerned about payment security with new partners
+
+**With HerBid**, Sarah can:
+- Find complementary women-owned businesses to team up with
+- Form a legal consortium to bid on larger contracts
+- Secure payments through blockchain-based milestone releases
+- Build a verified reputation that travels with her business
+
+## 🌈 Our Impact Vision
+
+We're creating a world where:
+- Women entrepreneurs can access larger, more lucrative contracts
+- Diverse supplier goals are easily met by procurement teams
+- Collaboration between businesses is secure and transparent
+- Women-owned business growth is accelerated through technology
+
+## 📝 Future Roadmap
+
+- AI-powered partner matching for optimal team formation
+- Integrated proposal development tools
+- Expansion into international markets
+- Mobile application for on-the-go contract management
+
+## 📞 Join the Movement
+
+Together, we can transform how women-owned businesses collaborate and compete in the marketplace. Join us in making contract opportunities more accessible, secure, and rewarding for women entrepreneurs everywhere.
 
 ## 📝 License
 
 This project is licensed under the MIT License.
-
-## 🙏 Acknowledgements
-
-- Hedera Hashgraph for blockchain infrastructure
-- Women entrepreneur communities for valuable feedback
-- Open source community for tools and libraries

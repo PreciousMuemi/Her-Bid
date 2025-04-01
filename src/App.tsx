@@ -16,11 +16,9 @@ import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
-<<<<<<< HEAD
-import DeploymentGuidePage from './pages/DeploymentGuidePage';
-=======
 import DeploymentGuidePage from './pages/DeploymentGuide';
->>>>>>> 7c3789538c75a1bc299c921dc33929c16724fb1a
+import Profile from './pages/Profile';
+import ContractDetails from './pages/ContractDetails';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -46,17 +44,19 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <div className="flex flex-col min-h-screen">
-              <main className="flex-grow container mx-auto px-4 py-8">
+              <main className="flex-grow">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/hedera" element={<HederaPage />} />
                   <Route path="/metamask" element={<MetaMaskPage />} />
                   <Route path="/create-consortium" element={<CreateConsortium />} />
                   <Route path="/manage-escrow" element={<ManageEscrow />} />
                   <Route path="/token-management" element={<TokenManagement />} />
                   <Route path="/deployment-guide" element={<DeploymentGuidePage />} />
+                  <Route path="/contracts/:id" element={<ContractDetails />} />
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
