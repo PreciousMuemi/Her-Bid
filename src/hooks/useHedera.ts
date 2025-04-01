@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import {
@@ -363,6 +362,20 @@ export const useHedera = () => {
       return fetchAccountBalance(accountId);
     }
     return "0";
+  };
+
+  const initializeClient = () => {
+    try {
+      const client = Client.forTestnet();
+      client.setOperator(
+        AccountId.fromString(import.meta.env.VITE_ACCOUNT_ID),
+        PrivateKey.fromStringED25519(import.meta.env.VITE_PRIVATE_KEY)
+      );
+      return client;
+    } catch (error) {
+      console.error("Failed to initialize Hedera client:", error);
+      return null;
+    }
   };
 
   return {

@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,12 +15,10 @@ import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
-// import VerifyCredentials from './pages/VerifyCredentials';
 
-// Context, hooks and layout
+// Context and hooks
 import { useThemeStore } from "./store/themeStore";
 import { HederaProvider } from "./contexts/HederaContext";
-import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 
 // Create QueryClient outside component to prevent re-creation on render
@@ -43,7 +40,6 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <div className="flex flex-col min-h-screen">
-              <Navbar />
               <main className="flex-grow container mx-auto px-4 py-8">
                 <Routes>
                   <Route path="/" element={<Index />} />

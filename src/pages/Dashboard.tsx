@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useHedera } from "@/contexts/HederaContext";
 import { useThemeStore } from "@/store/themeStore";
@@ -9,8 +8,8 @@ import StatsRow from "@/components/dashboard/StatsRow";
 import OpportunitiesTab from "@/components/dashboard/tabs/OpportunitiesTab";
 import SquadTab from "@/components/dashboard/tabs/SquadTab";
 import BidsTab from "@/components/dashboard/tabs/BidsTab";
-import { Wallet, ChevronRight, User, ShieldCheck, Award, Briefcase } from "lucide-react";
-import { toast } from "sonner";
+import { Wallet, ChevronRight, ShieldCheck, Briefcase, Award } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ const Dashboard = () => {
     const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
     if (!isAuthenticated && !isConnected) {
       toast.error("Please connect your wallet to access the dashboard");
-      navigate("/auth");
+      navigate("/dashboard");
     }
     
     // Load user profile if available

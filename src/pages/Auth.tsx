@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { useHedera } from "@/hooks/useHedera";
 import { useThemeStore } from "@/store/themeStore";
 import { toast } from "sonner";
 import { Wallet, Shield, UserRoundPlus, Loader2 } from "lucide-react";
+import { ethers } from "ethers";
 
 enum AuthMode {
   LOGIN = "login",
@@ -58,36 +58,57 @@ const AuthPage: React.FC = () => {
   };
 
   // Connect to MetaMask wallet
+
   const handleMetaMaskConnect = async () => {
+    const { ethereum } = window;
+    
+    if (!ethereum) {
+      toast.error("MetaMask is not installed!");
+      return;
+    }
+
     try {
+      console.log("Starting MetaMask connection...");
       setIsConnecting(true);
-      setWalletError(null);
       
-      const success = await connectMetaMask();
+      // Initialize provider
+      const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
       
-      if (success) {
-        // Save auth state
+      // Request account access
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const selectedAccount = accounts[0];
+
+      // Switch to Hedera testnet
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [{
+          chainName: "Hedera testnet",
+          chainId: "0x128",
+          nativeCurrency: { name: "HBAR", symbol: "ℏ", decimals: 18 },
+          rpcUrls: ["https://testnet.hashio.io/api"],
+          blockExplorerUrls: ["https://hashscan.io/testnet/"]
+        }]
+      });
+
+      if (selectedAccount) {
         localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("walletAddress", selectedAccount);
         
-        // In signup mode, also save user profile
         if (authMode === AuthMode.SIGNUP && formData.businessName) {
           localStorage.setItem("userProfile", JSON.stringify(formData));
         }
         
-        toast.success(`Successfully ${authMode === AuthMode.LOGIN ? 'logged in' : 'signed up'} with MetaMask`);
+        toast.success("Connected to MetaMask on Hedera Testnet!");
         navigate("/dashboard");
-      } else {
-        throw new Error("Failed to connect to MetaMask");
       }
     } catch (error: any) {
       console.error("MetaMask connection error:", error);
-      setWalletError(error.message);
-      toast.error(`Failed to connect: ${error.message}`);
+      toast.error(error.message || "Failed to connect");
     } finally {
       setIsConnecting(false);
     }
   };
-
+  
   return (
     <div className="container mx-auto px-4 py-16 max-w-6xl">
       <div className="text-center mb-10">
@@ -215,7 +236,7 @@ const AuthPage: React.FC = () => {
                 <Button
                   className="w-full justify-start mb-2"
                   variant={theme === 'dark' ? "outline" : "secondary"}
-                  onClick={handleMetaMaskConnect}
+                  onClick={() => handleMetaMaskConnect()}
                   disabled={isConnecting || (authMode === AuthMode.SIGNUP && !formData.businessName)}
                 >
                   {isConnecting ? (

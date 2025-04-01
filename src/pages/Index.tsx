@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/layout/Hero";
@@ -21,7 +20,7 @@ const Index = () => {
   }, []);
 
   const handleGetStarted = () => {
-    navigate('/auth');
+    navigate('/dashboard');
   };
 
   return (
@@ -48,7 +47,7 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-3 mt-4">
             <Button 
               variant="outline" 
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/dashboard')}
               className={`${
                 theme === 'dark'
                   ? 'border-purple-400/30 text-purple-300 hover:bg-purple-500/20'
