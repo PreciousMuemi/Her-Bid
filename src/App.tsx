@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,7 +15,7 @@ import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
-// import VerifyCredentials from './pages/VerifyCredentials';
+import DeploymentGuidePage from './pages/DeploymentGuide';
 
 // Context, hooks and layout
 import { useThemeStore } from "./store/themeStore";
@@ -54,7 +53,7 @@ const App = () => {
                   <Route path="/create-consortium" element={<CreateConsortium />} />
                   <Route path="/manage-escrow" element={<ManageEscrow />} />
                   <Route path="/token-management" element={<TokenManagement />} />
-                  {/* <Route path="/verify-credentials" element={<VerifyCredentials />} /> */}
+                  <Route path="/deployment-guide" element={<DeploymentGuidePage />} />
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
