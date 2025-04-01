@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import {
   Client, AccountId, PrivateKey, TransferTransaction, 
   Hbar, TransactionReceiptQuery, ContractCreateTransaction,
   ContractFunctionParameters, ContractCallQuery, FileCreateTransaction,
-  FileAppendTransaction
+  FileAppendTransaction, AccountBalanceQuery
 } from "@hashgraph/sdk";
 import { toast } from "sonner";
 
@@ -37,13 +38,15 @@ export const useHedera = () => {
       
       if (!window.ethereum) {
         toast.error("MetaMask is not installed. Please install MetaMask first.");
+        setLoading(false);
         return false;
       }
 
       try {
+        // Switch to Hedera network or add it if not exists
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x128" }],
+          params: [{ chainId: "0x128" }], // chainId for Hedera testnet (296 in decimal)
         });
       } catch (switchError: any) {
         if (switchError.code === 4902) {
@@ -78,9 +81,11 @@ export const useHedera = () => {
         }
       }
 
+      // Create ethers provider from window.ethereum
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       setEthProvider(provider);
       
+      // Request accounts access
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
@@ -91,7 +96,8 @@ export const useHedera = () => {
         localStorage.setItem("metamaskAddress", address);
         
         try {
-          const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts?evm-address=${address}`);
+          // Query mirror node to check if EVM address has an associated Hedera account
+          const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts?evm-address=${address.substring(2)}`);
           const data = await response.json();
           
           if (data && data.accounts && data.accounts.length > 0) {
@@ -210,7 +216,11 @@ export const useHedera = () => {
       const client = Client.forTestnet();
       client.setOperator(AccountId.fromString(operatorId), PrivateKey.fromString(operatorKey));
       
-      const balanceQuery = await new AccountId(id).getBalance(client);
+      // Fixed: Using AccountBalanceQuery with AccountId object instead of string
+      const balanceQuery = await new AccountBalanceQuery()
+        .setAccountId(AccountId.fromString(id))
+        .execute(client);
+      
       const balanceHbar = balanceQuery.hbars.toString();
       setBalance(balanceHbar);
       setLoading(false);
@@ -300,6 +310,7 @@ export const useHedera = () => {
         PrivateKey.fromString(operatorKey)
       );
 
+      // Create a file on Hedera to store the bytecode
       const fileCreateTx = new FileCreateTransaction()
         .setKeys([PrivateKey.fromString(operatorKey)])
         .freezeWith(client);
@@ -311,6 +322,7 @@ export const useHedera = () => {
       
       console.log(`- The bytecode file ID is: ${bytecodeFileId}`);
       
+      // Append bytecode content to the file
       const fileAppendTx = new FileAppendTransaction()
         .setFileId(bytecodeFileId!)
         .setContents(bytecode)
@@ -323,6 +335,7 @@ export const useHedera = () => {
       
       console.log(`- Content added to file`);
       
+      // Create the smart contract
       const contractCreateTx = new ContractCreateTransaction()
         .setBytecodeFileId(bytecodeFileId!)
         .setGas(gasLimit)

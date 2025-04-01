@@ -25,7 +25,7 @@ const HederaPage = () => {
     connectToHedera, 
     disconnectFromHedera, 
     fetchAccountBalance,
-    sendHbarToMetaMask 
+    sendHbarToMetaMask
   } = useHedera();
   
   const [operatorId, setOperatorId] = useState("");
