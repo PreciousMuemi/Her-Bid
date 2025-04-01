@@ -30,7 +30,7 @@ const FirstTimeUserExperience = () => {
     <Card className={`mb-8 overflow-hidden relative ${
       isDark 
         ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974]' 
-        : 'bg-white shadow-md border border-gray-100'
+        : 'bg-white shadow-md border-gray-100'
     }`}>
       <button 
         onClick={hideGuide}
@@ -50,7 +50,7 @@ const FirstTimeUserExperience = () => {
         </div>
         
         <p className={`text-sm mb-6 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-          HerBid is a decentralized platform for women-led businesses to form consortiums, bid on contracts, and manage secure payments. Here's how to get started:
+          HerBid helps women-owned businesses win more contracts by working together. Here's how to get started:
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -59,10 +59,10 @@ const FirstTimeUserExperience = () => {
           }`}>
             <Heart className={`h-5 w-5 mb-2 ${isDark ? 'text-pink-400' : 'text-pink-600'}`} />
             <h4 className={`font-semibold text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Create Your Consortium
+              Team Up
             </h4>
             <p className={`text-xs mb-3 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-              Form a legal consortium with other women-led businesses to bid on larger contracts together.
+              Find partners with complementary skills to apply for larger contracts together.
             </p>
             <Button 
               size="sm" 
@@ -72,7 +72,7 @@ const FirstTimeUserExperience = () => {
               }`}
               onClick={() => navigate('/create-consortium')}
             >
-              Create Consortium
+              Find Partners
             </Button>
           </div>
           
@@ -81,10 +81,10 @@ const FirstTimeUserExperience = () => {
           }`}>
             <Users className={`h-5 w-5 mb-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
             <h4 className={`font-semibold text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Manage Secure Escrow
+              Secure Payments
             </h4>
             <p className={`text-xs mb-3 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-              Create milestone-based escrow contracts for secure payments between consortium members.
+              Protect your earnings with milestone-based payments that release as work is completed.
             </p>
             <Button 
               size="sm" 
@@ -94,7 +94,7 @@ const FirstTimeUserExperience = () => {
               }`}
               onClick={() => navigate('/manage-escrow')}
             >
-              Setup Escrow
+              Payment Protection
             </Button>
           </div>
           
@@ -103,10 +103,10 @@ const FirstTimeUserExperience = () => {
           }`}>
             <Award className={`h-5 w-5 mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
             <h4 className={`font-semibold text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Submit & Track Bids
+              Available Contracts
             </h4>
             <p className={`text-xs mb-3 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-              Browse contract opportunities and submit consortium bids with transparent tracking.
+              Browse contracts that match your skills and submit applications with transparent tracking.
             </p>
             <Button 
               size="sm" 
@@ -131,7 +131,7 @@ const FirstTimeUserExperience = () => {
                 Why Hedera for HerBid?
               </h4>
               <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                HerBid leverages Hedera's fast, secure, and low-cost blockchain network for transparent bidding, secure escrow payments, and verifiable reputation tracking - all essential for building trust in women-led business consortiums.
+                HerBid uses Hedera's secure blockchain for transparent applications, safe payment protection, and verified business reputation - all essential for building trust between women-led businesses working together.
               </p>
             </div>
           </div>
