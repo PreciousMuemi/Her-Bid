@@ -10,6 +10,8 @@ import SquadTab from "@/components/dashboard/tabs/SquadTab";
 import BidsTab from "@/components/dashboard/tabs/BidsTab";
 import { Wallet, ChevronRight, User, ShieldCheck, Award, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import WalletConnectGuide from '@/components/WalletConnectGuide';
+import FirstTimeUserExperience from '@/components/FirstTimeUserExperience';
 
 const Dashboard = () => {
   const navigate = useNavigate();

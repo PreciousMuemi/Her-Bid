@@ -136,7 +136,9 @@ export const useHedera = () => {
       }
     } catch (error) {
       console.error("Error connecting to MetaMask:", error);
-      toast.error("Failed to connect MetaMask");
+      console.log("Ethereum object before connection:", window.ethereum);
+      console.log("Ethereum object:", window.ethereum);
+      toast.error("Failed to connect MetaMask: " + error.message);
       setLoading(false);
       return false;
     }

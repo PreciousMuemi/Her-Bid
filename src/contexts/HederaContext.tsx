@@ -216,7 +216,8 @@ export const HederaProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error connecting MetaMask wallet:", error);
-      toast.error("Failed to connect MetaMask wallet");
+      console.log("Ethereum object:", window.ethereum);
+      toast.error("Failed to connect MetaMask wallet: " + error.message);
       return false;
     }
   };
