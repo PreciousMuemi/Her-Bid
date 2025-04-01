@@ -15,6 +15,10 @@ import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
+<<<<<<< HEAD
+=======
+import DeploymentGuidePage from './pages/DeploymentGuide';
+>>>>>>> 2692d003509eeb826919bce6b3b5fe6d5671216c
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -50,7 +54,7 @@ const App = () => {
                   <Route path="/create-consortium" element={<CreateConsortium />} />
                   <Route path="/manage-escrow" element={<ManageEscrow />} />
                   <Route path="/token-management" element={<TokenManagement />} />
-                  {/* <Route path="/verify-credentials" element={<VerifyCredentials />} /> */}
+                  <Route path="/deployment-guide" element={<DeploymentGuidePage />} />
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

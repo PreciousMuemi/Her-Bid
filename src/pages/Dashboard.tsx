@@ -8,8 +8,8 @@ import StatsRow from "@/components/dashboard/StatsRow";
 import OpportunitiesTab from "@/components/dashboard/tabs/OpportunitiesTab";
 import SquadTab from "@/components/dashboard/tabs/SquadTab";
 import BidsTab from "@/components/dashboard/tabs/BidsTab";
-import { Wallet, ChevronRight, ShieldCheck, Briefcase, Award } from 'lucide-react';
-import { toast } from 'sonner';
+import { Wallet, ChevronRight, User, ShieldCheck, Award, Briefcase } from "lucide-react";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,13 +19,14 @@ const Dashboard = () => {
   const [greeting, setGreeting] = useState("Hey there!");
   const [timeOfDay, setTimeOfDay] = useState("");
   const [username, setUsername] = useState("Entrepreneur");
+  const [showWalletGuide, setShowWalletGuide] = useState(false);
   
   // Check auth status
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
     if (!isAuthenticated && !isConnected) {
       toast.error("Please connect your wallet to access the dashboard");
-      navigate("/dashboard");
+      navigate("/auth");
     }
     
     // Load user profile if available
@@ -62,16 +63,7 @@ const Dashboard = () => {
 
   // Connect wallet handler
   const handleConnectWallet = async () => {
-    setIsLoading(true);
-    try {
-      await connectToHedera();
-      toast.success("Wallet connected successfully");
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
-      toast.error("Failed to connect wallet");
-    } finally {
-      setIsLoading(false);
-    }
+    setShowWalletGuide(true);
   };
 
   // Disconnect wallet handler
@@ -84,6 +76,24 @@ const Dashboard = () => {
   const navigateToFeature = (path: string) => {
     navigate(path);
   };
+
+  // When wallet connection is complete
+  const handleWalletConnectComplete = () => {
+    setShowWalletGuide(false);
+    localStorage.setItem("isAuthenticated", "true");
+  };
+
+  // If showing wallet guide
+  if (showWalletGuide) {
+    return (
+      <div className="max-w-md mx-auto py-8">
+        <h1 className={`text-2xl font-bold text-center mb-6 ${theme === 'dark' ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>
+          Welcome to HerBid ✨
+        </h1>
+        <WalletConnectGuide onComplete={handleWalletConnectComplete} />
+      </div>
+    );
+  }
 
   // If wallet is not connected, show connect wallet UI
   if (!isConnected) {
@@ -164,6 +174,9 @@ const Dashboard = () => {
           </CustomButton>
         </div>
       </div>
+      
+      {/* First Time User Experience */}
+      <FirstTimeUserExperience />
       
       {/* Stats Row */}
       <StatsRow />
