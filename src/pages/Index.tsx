@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/layout/Hero";
@@ -6,6 +7,7 @@ import HowItWorks from "@/components/layout/HowItWorks";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { useThemeStore } from "@/store/themeStore";
 import { Button } from "@/components/ui/button";
+import Navbar from "@/components/layout/Navbar";
 
 const Index = () => {
   const [isAnimated, setIsAnimated] = useState(false);
@@ -25,7 +27,8 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${theme === 'dark' ? 'bg-[#050A30] text-white' : ''}`}>
-      <main className="flex-grow">
+      <Navbar />
+      <main className="flex-grow pt-16">
         <Hero />
         <Features />
         <HowItWorks />

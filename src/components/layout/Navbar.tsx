@@ -1,14 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { CustomButton } from '../ui/CustomButton';
 import { useThemeStore } from '@/store/themeStore';
 
-const Navbar = ({ dashboard = false }) => {
+const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useThemeStore();
+  const location = useLocation();
+  const isDashboard = location.pathname.includes('/dashboard');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,7 +34,7 @@ const Navbar = ({ dashboard = false }) => {
   return (
     <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || dashboard ? 'bg-[#050A30]/90 backdrop-blur-md shadow-sm py-4 text-white' : 'bg-transparent py-6 text-foreground'
+        isScrolled || isDashboard ? 'bg-[#050A30]/90 backdrop-blur-md shadow-sm py-4 text-white' : 'bg-transparent py-6 text-foreground'
       }`}
     >
       <div className="container mx-auto px-4 md:px-6">
@@ -42,29 +44,27 @@ const Navbar = ({ dashboard = false }) => {
             to="/" 
             className="flex items-center"
           >
-            <span className={`font-bold text-2xl ${dashboard || isScrolled ? 'text-white' : 'text-primary'}`}>Her<span className={`${dashboard || isScrolled ? 'text-pink-300' : 'text-secondary'}`}>Bid</span></span>
+            <span className={`font-bold text-2xl ${isDashboard || isScrolled ? 'text-white' : 'text-primary'}`}>Her<span className={`${isDashboard || isScrolled ? 'text-pink-300' : 'text-secondary'}`}>Bid</span></span>
           </Link>
           
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {!dashboard && (
-              <>
-                <Link to="/" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Home</Link>
-                <Link to="#features" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Features</Link>
-                <Link to="#how-it-works" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>How it Works</Link>
-                <Link to="#contact" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Contact</Link>
-              </>
-            )}
-          </div>
+          {/* Desktop Menu - Only show on landing page */}
+          {!isDashboard && (
+            <div className="hidden md:flex items-center space-x-8">
+              <Link to="/" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Home</Link>
+              <a href="#features" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Features</a>
+              <a href="#how-it-works" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>How it Works</a>
+              <Link to="/deployment-guide" className={`hover:text-primary transition-colors ${isScrolled ? 'text-white' : 'text-foreground'}`}>Deploy</Link>
+            </div>
+          )}
           
           {/* Call to Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {!dashboard && (
+            {!isDashboard && (
               <>
                 <CustomButton 
                   variant="ghost" 
                   size="default"
-                  onClick={() => window.location.href = '/dashboard'}
+                  onClick={() => window.location.href = '/auth'}
                 >
                   Sign In
                 </CustomButton>
@@ -95,7 +95,7 @@ const Navbar = ({ dashboard = false }) => {
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            {!dashboard && (
+            {!isDashboard && (
               <button 
                 className={`${isScrolled ? 'text-white' : 'text-foreground'}`}
                 onClick={toggleMenu}
@@ -109,18 +109,18 @@ const Navbar = ({ dashboard = false }) => {
       </div>
       
       {/* Mobile Menu */}
-      {isMenuOpen && !dashboard && (
+      {isMenuOpen && !isDashboard && (
         <div className="md:hidden bg-white/95 backdrop-blur-lg shadow-lg animate-scale-in">
           <div className="container mx-auto px-4 py-6 space-y-4">
             <Link to="/" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Home</Link>
-            <Link to="#features" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Features</Link>
-            <Link to="#how-it-works" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>How it Works</Link>
-            <Link to="#contact" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+            <a href="#features" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Features</a>
+            <a href="#how-it-works" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>How it Works</a>
+            <Link to="/deployment-guide" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Deploy</Link>
             <div className="pt-4 flex flex-col space-y-3">
               <CustomButton 
                 variant="ghost" 
                 size="default"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => window.location.href = '/auth'}
               >
                 Sign In
               </CustomButton>

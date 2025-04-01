@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,10 +16,7 @@ import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
 import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
-<<<<<<< HEAD
-=======
 import DeploymentGuidePage from './pages/DeploymentGuide';
->>>>>>> 2692d003509eeb826919bce6b3b5fe6d5671216c
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
