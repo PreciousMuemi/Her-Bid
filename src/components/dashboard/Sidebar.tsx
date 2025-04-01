@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
 import { useHedera } from '@/contexts/HederaContext';
@@ -53,8 +53,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }: SidebarProps) => {
     { 
       icon: <Briefcase className="h-5 w-5" />, 
       label: 'Contracts', 
-      path: '/contracts',
-      active: location.pathname === '/contracts'
+      path: '/contracts/1',
+      active: location.pathname.startsWith('/contracts')
     },
     { 
       icon: <ShieldCheck className="h-5 w-5" />, 
@@ -79,9 +79,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }: SidebarProps) => {
     },
     { 
       icon: <HelpCircle className="h-5 w-5" />, 
-      label: 'Help & Support', 
-      path: '/help',
-      active: location.pathname === '/help'
+      label: 'Deployment Guide', 
+      path: '/deployment-guide',
+      active: location.pathname === '/deployment-guide'
     }
   ];
   

@@ -13,18 +13,16 @@ import { Wallet, ChevronRight, Building2, Shield, Award, Briefcase } from "lucid
 import { toast } from "sonner";
 import WalletConnectGuide from '@/components/WalletConnectGuide';
 import FirstTimeUserExperience from '@/components/FirstTimeUserExperience';
-import Sidebar from "@/components/dashboard/Sidebar";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { isConnected, accountId, balance, connectToHedera, disconnectFromHedera } = useHedera();
+  const { isConnected, accountId, balance, connectToHedera, connectMetaMask, disconnectFromHedera } = useHedera();
   const [isLoading, setIsLoading] = useState(false);
   const [greeting, setGreeting] = useState("Hey there!");
   const [timeOfDay, setTimeOfDay] = useState("");
   const [username, setUsername] = useState("Entrepreneur");
   const [showWalletGuide, setShowWalletGuide] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // Check auth status
   useEffect(() => {
@@ -66,9 +64,27 @@ const Dashboard = () => {
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
   }, []);
 
-  // Connect wallet handler
+  // Connect wallet handler - now using real wallet connection
   const handleConnectWallet = async () => {
-    setShowWalletGuide(true);
+    setIsLoading(true);
+    
+    try {
+      // Try to connect with MetaMask first
+      const success = await connectMetaMask();
+      
+      if (success) {
+        localStorage.setItem("isAuthenticated", "true");
+        toast.success("Wallet connected successfully!");
+      } else {
+        // Fall back to showing the wallet guide
+        setIsLoading(false);
+        setShowWalletGuide(true);
+      }
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      setIsLoading(false);
+      setShowWalletGuide(true);
+    }
   };
 
   // Disconnect wallet handler
@@ -86,11 +102,6 @@ const Dashboard = () => {
   const handleWalletConnectComplete = () => {
     setShowWalletGuide(false);
     localStorage.setItem("isAuthenticated", "true");
-  };
-  
-  // Toggle sidebar
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
   };
 
   // If showing wallet guide
@@ -141,193 +152,185 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      
-      <main className={`flex-1 transition-all duration-300 ${
-        isSidebarOpen ? 'ml-64' : 'ml-16'
-      }`}>
-        <div className="container mx-auto px-4 md:px-6 py-8">
-          {/* Dashboard Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className={`text-3xl md:text-4xl font-bold ${theme === 'dark' ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' : 'text-gray-900'} mb-2`}>
-                {greeting} <span className="italic">It's {timeOfDay}, {username}!</span> ✨
-              </h1>
-              <p className={`${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'} max-w-2xl`}>
-                Ready to connect with other entrepreneurs and take on new contracts? Let's make it happen!
-              </p>
-            </div>
-            
-            <div className={`flex items-center p-3 rounded-lg ${
-              theme === 'dark' 
-                ? 'bg-[#0A155A]/70 border-[#303974] shadow-md' 
-                : 'bg-white border border-gray-200 shadow-sm'
-            }`}>
-              <div className="mr-4">
-                <p className={`text-xs ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>Account</p>
-                <p className={`text-sm font-mono truncate max-w-[120px] md:max-w-xs ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {accountId}
-                </p>
-              </div>
-              <div className="mr-4 border-l pl-4 border-[#303974]">
-                <p className={`text-xs ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>Balance</p>
-                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {balance ? parseFloat(balance).toFixed(4) : '0'} HBAR
-                </p>
-              </div>
-              <CustomButton
-                size="sm"
-                variant="outline"
-                className={`text-xs ${
-                  theme === 'dark' 
-                    ? 'border-[#303974] text-[#B2B9E1] hover:bg-[#303974]' 
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-100'
-                }`}
-                onClick={handleDisconnectWallet}
-              >
-                Disconnect
-              </CustomButton>
-            </div>
-          </div>
-          
-          {/* First Time User Experience */}
-          <FirstTimeUserExperience />
-          
-          {/* Stats Row */}
-          <StatsRow />
-          
-          {/* Platform Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className={`p-6 rounded-xl ${
-              theme === 'dark' 
-                ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
-                : 'bg-white border border-gray-200 hover:border-purple-300/50'
-              } transition-all duration-300`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <Building2 className={`h-8 w-8 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-                <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-              </div>
-              <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Team Up
-              </h3>
-              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                Find partners with complementary skills to work on larger contracts together.
-              </p>
-              <CustomButton 
-                size="sm" 
-                className="w-full"
-                onClick={() => navigateToFeature('/create-consortium')}
-              >
-                Find Partners
-              </CustomButton>
-            </div>
-
-            <div className={`p-6 rounded-xl ${
-              theme === 'dark' 
-                ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
-                : 'bg-white border border-gray-200 hover:border-purple-300/50'
-              } transition-all duration-300`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <Shield className={`h-8 w-8 ${theme === 'dark' ? 'text-pink-400' : 'text-pink-600'}`} />
-                <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-              </div>
-              <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Secure Payments
-              </h3>
-              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                Protect your earnings with milestone-based payments held securely until work is complete.
-              </p>
-              <CustomButton 
-                size="sm" 
-                className="w-full"
-                onClick={() => navigateToFeature('/manage-escrow')}
-              >
-                Manage Payments
-              </CustomButton>
-            </div>
-
-            <div className={`p-6 rounded-xl ${
-              theme === 'dark' 
-                ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
-                : 'bg-white border border-gray-200 hover:border-purple-300/50'
-              } transition-all duration-300`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <Award className={`h-8 w-8 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-              </div>
-              <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Business Reputation
-              </h3>
-              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                Build and showcase your business credibility to win more contracts in the future.
-              </p>
-              <CustomButton 
-                size="sm" 
-                className="w-full"
-                onClick={() => navigateToFeature('/token-management')}
-              >
-                View Reputation
-              </CustomButton>
-            </div>
-          </div>
-          
-          {/* Tabs */}
-          <Tabs defaultValue="opportunities" className="w-full mt-8">
-            <TabsList className={`w-full md:w-auto ${
-              theme === 'dark' 
-                ? 'bg-[#0A155A]/70 border border-[#303974]' 
-                : 'bg-gray-100 border border-gray-200'
-            } p-1 mb-6`}>
-              <TabsTrigger 
-                value="opportunities" 
-                className={`${
-                  theme === 'dark'
-                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-                }`}
-              >
-                Available Contracts
-              </TabsTrigger>
-              <TabsTrigger 
-                value="squad" 
-                className={`${
-                  theme === 'dark'
-                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-                }`}
-              >
-                Partner Network
-              </TabsTrigger>
-              <TabsTrigger 
-                value="bids" 
-                className={`${
-                  theme === 'dark'
-                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-                }`}
-              >
-                Your Applications
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="opportunities" className="mt-0">
-              <OpportunitiesTab />
-            </TabsContent>
-            
-            <TabsContent value="squad" className="mt-0">
-              <SquadTab />
-            </TabsContent>
-            
-            <TabsContent value="bids" className="mt-0">
-              <BidsTab />
-            </TabsContent>
-          </Tabs>
+    <div className="container mx-auto px-4 md:px-6 py-8">
+      {/* Dashboard Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className={`text-3xl md:text-4xl font-bold ${theme === 'dark' ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' : 'text-gray-900'} mb-2`}>
+            {greeting} <span className="italic">It's {timeOfDay}, {username}!</span> ✨
+          </h1>
+          <p className={`${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'} max-w-2xl`}>
+            Ready to connect with other entrepreneurs and take on new contracts? Let's make it happen!
+          </p>
         </div>
-      </main>
+        
+        <div className={`flex items-center p-3 rounded-lg ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border-[#303974] shadow-md' 
+            : 'bg-white border border-gray-200 shadow-sm'
+        }`}>
+          <div className="mr-4">
+            <p className={`text-xs ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>Account</p>
+            <p className={`text-sm font-mono truncate max-w-[120px] md:max-w-xs ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {accountId}
+            </p>
+          </div>
+          <div className="mr-4 border-l pl-4 border-[#303974]">
+            <p className={`text-xs ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>Balance</p>
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {balance ? parseFloat(balance).toFixed(4) : '0'} HBAR
+            </p>
+          </div>
+          <CustomButton
+            size="sm"
+            variant="outline"
+            className={`text-xs ${
+              theme === 'dark' 
+                ? 'border-[#303974] text-[#B2B9E1] hover:bg-[#303974]' 
+                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+            onClick={handleDisconnectWallet}
+          >
+            Disconnect
+          </CustomButton>
+        </div>
+      </div>
+      
+      {/* First Time User Experience */}
+      <FirstTimeUserExperience />
+      
+      {/* Stats Row */}
+      <StatsRow />
+      
+      {/* Platform Features */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className={`p-6 rounded-xl ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
+            : 'bg-white border border-gray-200 hover:border-purple-300/50'
+          } transition-all duration-300`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <Building2 className={`h-8 w-8 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
+            <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Team Up
+          </h3>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Find partners with complementary skills to work on larger contracts together.
+          </p>
+          <CustomButton 
+            size="sm" 
+            className="w-full"
+            onClick={() => navigateToFeature('/create-consortium')}
+          >
+            Find Partners
+          </CustomButton>
+        </div>
+
+        <div className={`p-6 rounded-xl ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
+            : 'bg-white border border-gray-200 hover:border-purple-300/50'
+          } transition-all duration-300`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <Shield className={`h-8 w-8 ${theme === 'dark' ? 'text-pink-400' : 'text-pink-600'}`} />
+            <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Secure Payments
+          </h3>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Protect your earnings with step-by-step payments held securely until work is complete.
+          </p>
+          <CustomButton 
+            size="sm" 
+            className="w-full"
+            onClick={() => navigateToFeature('/manage-escrow')}
+          >
+            Manage Payments
+          </CustomButton>
+        </div>
+
+        <div className={`p-6 rounded-xl ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border border-[#303974] hover:border-purple-500/30' 
+            : 'bg-white border border-gray-200 hover:border-purple-300/50'
+          } transition-all duration-300`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <Award className={`h-8 w-8 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+            <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Business Reputation
+          </h3>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Build and showcase your business credibility to win more contracts in the future.
+          </p>
+          <CustomButton 
+            size="sm" 
+            className="w-full"
+            onClick={() => navigateToFeature('/token-management')}
+          >
+            View Reputation
+          </CustomButton>
+        </div>
+      </div>
+      
+      {/* Tabs */}
+      <Tabs defaultValue="opportunities" className="w-full mt-8">
+        <TabsList className={`w-full md:w-auto ${
+          theme === 'dark' 
+            ? 'bg-[#0A155A]/70 border border-[#303974]' 
+            : 'bg-gray-100 border border-gray-200'
+        } p-1 mb-6`}>
+          <TabsTrigger 
+            value="opportunities" 
+            className={`${
+              theme === 'dark'
+                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+            }`}
+          >
+            Available Contracts
+          </TabsTrigger>
+          <TabsTrigger 
+            value="squad" 
+            className={`${
+              theme === 'dark'
+                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+            }`}
+          >
+            Partner Network
+          </TabsTrigger>
+          <TabsTrigger 
+            value="bids" 
+            className={`${
+              theme === 'dark'
+                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+            }`}
+          >
+            Your Applications
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="opportunities" className="mt-0">
+          <OpportunitiesTab />
+        </TabsContent>
+        
+        <TabsContent value="squad" className="mt-0">
+          <SquadTab />
+        </TabsContent>
+        
+        <TabsContent value="bids" className="mt-0">
+          <BidsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
