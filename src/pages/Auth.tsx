@@ -60,50 +60,56 @@ const AuthPage: React.FC = () => {
   // Connect to MetaMask wallet
 
   const handleMetaMaskConnect = async () => {
-    const { ethereum } = window;
-    
-    if (!ethereum) {
-      toast.error("MetaMask is not installed!");
-      return;
-    }
-
     try {
       console.log("Starting MetaMask connection...");
       setIsConnecting(true);
       
-      // Initialize provider
-      const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      
-      // Request account access
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const selectedAccount = accounts[0];
+      // First check if MetaMask is installed
+      if (typeof window.ethereum === 'undefined') {
+        throw new Error("MetaMask is not installed");
+      }
 
-      // Switch to Hedera testnet
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [{
-          chainName: "Hedera testnet",
-          chainId: "0x128",
-          nativeCurrency: { name: "HBAR", symbol: "ℏ", decimals: 18 },
-          rpcUrls: ["https://testnet.hashio.io/api"],
-          blockExplorerUrls: ["https://hashscan.io/testnet/"]
-        }]
+      // Request accounts using the correct method
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
       });
 
-      if (selectedAccount) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("walletAddress", selectedAccount);
-        
-        if (authMode === AuthMode.SIGNUP && formData.businessName) {
-          localStorage.setItem("userProfile", JSON.stringify(formData));
+      // Switch to Hedera network
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x128' }]
+      }).catch(async (switchError) => {
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x128',
+              chainName: 'Hedera Testnet',
+              nativeCurrency: {
+                name: 'HBAR',
+                symbol: 'ℏ',
+                decimals: 18
+              },
+              rpcUrls: ['https://testnet.hashio.io/api'],
+              blockExplorerUrls: ['https://hashscan.io/testnet/']
+            }]
+          });
         }
-        
-        toast.success("Connected to MetaMask on Hedera Testnet!");
-        navigate("/dashboard");
+      });
+
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("walletAddress", accounts[0]);
+      
+      if (authMode === AuthMode.SIGNUP && formData.businessName) {
+        localStorage.setItem("userProfile", JSON.stringify(formData));
       }
+      
+      toast.success("Connected to MetaMask!");
+      navigate("/dashboard");
+
     } catch (error: any) {
       console.error("MetaMask connection error:", error);
-      toast.error(error.message || "Failed to connect");
+      toast.error(error.message || "Connection failed");
     } finally {
       setIsConnecting(false);
     }

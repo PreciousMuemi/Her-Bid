@@ -123,7 +123,8 @@ export const HederaProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // MetaMask connection functions
-  const connectMetaMask = async (): Promise<boolean> => {
+const connectMetaMask = async (): Promise<boolean> => {
+    console.log("Attempting to connect to MetaMask...");
     try {
       if (!window.ethereum) {
         toast.error("MetaMask is not installed. Please install MetaMask first.");

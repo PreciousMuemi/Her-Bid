@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHedera } from '../hooks/useHedera';
 
-const Auth = () => {
+const Auth: React.FC = () => {
   const { connectMetaMask, ethAddress, isConnected } = useHedera();
 
   const handleMetaMaskConnect = async () => {
@@ -20,5 +20,4 @@ const Auth = () => {
     </div>
   );
 };
-
 export default Auth;
