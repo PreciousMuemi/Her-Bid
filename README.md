@@ -22,7 +22,7 @@ HerBid solves these problems by creating a trustworthy platform where women entr
 ### Team Up Engine
 - Find partners with complementary skills
 - Form verified teams with fair terms
-- Apply for contracts together
+- Apply for contracts together with matching technology
 
 ### Secure Payment Protection
 - Pre-funded milestone payments held safely
@@ -34,36 +34,33 @@ HerBid solves these problems by creating a trustworthy platform where women entr
 - Showcase your skills and past work
 - Gain visibility with clients seeking diverse suppliers
 
-## 🎯 For Women Entrepreneurs
-
-HerBid makes it easy to:
-1. **Connect** with other women-owned businesses
-2. **Collaborate** on contracts that would be too large for a single business
-3. **Get paid securely** through milestone-based payments
-4. **Build a reputation** that helps you win more work
-
 ## 🚀 Getting Started
 
-1. Create your account and verify your women-owned business status
-2. Build your business profile with your skills and portfolio
-3. Browse available contracts or team up with other businesses
-4. Apply for contracts together or find partners for opportunities
-5. Manage projects and payments securely through the platform
+1. **Create Your Account**: Connect your wallet to verify your identity
+2. **Complete Your Profile**: Tell us about your business skills and capacity
+3. **Browse Opportunities**: Find contracts that match your expertise
+4. **Team Up**: Connect with complementary women-owned businesses
+5. **Apply Together**: Submit joint proposals for contracts
+6. **Get Paid Securely**: Complete milestones and receive protected payments
 
-## 🛠️ Technologies
+## 📊 How It Works
 
-- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
-- **Blockchain**: Hedera Hashgraph
-- **Smart Contracts**: Solidity
-- **Authentication**: Hedera wallet integration
-- **State Management**: TanStack Query, Zustand
+### For Women Entrepreneurs
 
-## 📊 Market Opportunity
+1. **Profile Creation**: Set up your business profile highlighting your skills and capacity
+2. **Contract Matching**: Get recommended opportunities with a "Match Score" based on your expertise
+3. **Partner Matching**: Find other women entrepreneurs with complementary skills
+4. **Secure Collaboration**: Form legal consortiums with clear payment terms
+5. **Protected Payments**: Client funds are secured in escrow and released at milestones
+6. **Reputation Building**: Every successful project builds your business credibility
 
-- 13 million women-owned businesses in the US alone
-- $500 billion annual government contracts market
-- Growing focus on diverse supplier requirements
-- Increasing demand for collaborative procurement solutions
+### For Contract Issuers
+
+1. **Post Requirements**: Specify needed skills and project details
+2. **Access Diverse Teams**: Get proposals from qualified women-owned business consortiums
+3. **Transparent Process**: See verified credentials and past performance
+4. **Milestone Management**: Release payments as work is completed
+5. **Support Diversity**: Meet supplier diversity goals with verified women-owned businesses
 
 ## 💰 Business Model
 
@@ -91,6 +88,14 @@ We're creating a world where:
 - Diverse supplier goals are easily met by procurement teams
 - Collaboration between businesses is secure and transparent
 - Women-owned business growth is accelerated through technology
+
+## 🛠️ Technologies
+
+- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
+- **Blockchain**: Hedera Hashgraph
+- **Smart Contracts**: Solidity
+- **Authentication**: Hedera wallet integration
+- **State Management**: TanStack Query, Zustand
 
 ## 📝 Future Roadmap
 

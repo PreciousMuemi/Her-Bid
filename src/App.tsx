@@ -19,6 +19,7 @@ import AuthPage from './pages/Auth';
 import DeploymentGuidePage from './pages/DeploymentGuide';
 import Profile from './pages/Profile';
 import ContractDetails from './pages/ContractDetails';
+import QuickProfileGuide from './components/QuickProfileGuide';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -35,13 +36,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const isHomePage = location.pathname === '/';
   const isAuthPage = location.pathname === '/auth';
+  const isProfileSetupPage = location.pathname === '/quick-profile';
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   
-  // Don't show sidebar on homepage and auth page
-  const showSidebar = !isHomePage && !isAuthPage;
+  // Don't show sidebar on homepage, auth page, and profile setup page
+  const showSidebar = !isHomePage && !isAuthPage && !isProfileSetupPage;
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -85,6 +87,7 @@ const App = () => {
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/quick-profile" element={<QuickProfileGuide />} />
                 <Route path="/hedera" element={<HederaPage />} />
                 <Route path="/metamask" element={<MetaMaskPage />} />
                 <Route path="/create-consortium" element={<CreateConsortium />} />

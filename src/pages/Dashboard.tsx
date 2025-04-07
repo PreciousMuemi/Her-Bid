@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useHedera } from "@/contexts/HederaContext";
 import { useThemeStore } from "@/store/themeStore";
 import { CustomButton } from "@/components/ui/CustomButton";
@@ -13,9 +13,11 @@ import { Wallet, ChevronRight, Building2, Shield, Award, Briefcase } from "lucid
 import { toast } from "sonner";
 import WalletConnectGuide from '@/components/WalletConnectGuide';
 import FirstTimeUserExperience from '@/components/FirstTimeUserExperience';
+import RecommendedContracts from '@/components/dashboard/RecommendedContracts';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { theme } = useThemeStore();
   const { isConnected, accountId, balance, connectToHedera, connectMetaMask, disconnectFromHedera } = useHedera();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +25,16 @@ const Dashboard = () => {
   const [timeOfDay, setTimeOfDay] = useState("");
   const [username, setUsername] = useState("Entrepreneur");
   const [showWalletGuide, setShowWalletGuide] = useState(false);
+  const [activeTab, setActiveTab] = useState("opportunities");
+  const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
+  
+  // Check for active tab in URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   
   // Check auth status
   useEffect(() => {
@@ -30,6 +42,7 @@ const Dashboard = () => {
     if (!isAuthenticated && !isConnected) {
       toast.error("Please connect your wallet to access the dashboard");
       navigate("/auth");
+      return;
     }
     
     // Load user profile if available
@@ -39,7 +52,12 @@ const Dashboard = () => {
         const profile = JSON.parse(userProfile);
         if (profile.businessName) {
           setUsername(profile.businessName.split(' ')[0]);
+        } else if (profile.firstName) {
+          setUsername(profile.firstName);
         }
+        
+        // Check if profile is complete
+        setHasCompletedProfile(!!profile.completedProfile);
       } catch (e) {
         console.error("Error parsing user profile", e);
       }
@@ -64,7 +82,7 @@ const Dashboard = () => {
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
   }, []);
 
-  // Connect wallet handler - now using real wallet connection
+  // Connect wallet handler - using real wallet connection
   const handleConnectWallet = async () => {
     setIsLoading(true);
     
@@ -102,6 +120,12 @@ const Dashboard = () => {
   const handleWalletConnectComplete = () => {
     setShowWalletGuide(false);
     localStorage.setItem("isAuthenticated", "true");
+    navigate('/quick-profile');
+  };
+  
+  // Setup profile
+  const handleSetupProfile = () => {
+    navigate('/quick-profile');
   };
 
   // If showing wallet guide
@@ -148,6 +172,51 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
+    );
+  }
+  
+  // If profile is not completed, prompt user to complete it
+  if (!hasCompletedProfile) {
+    return (
+      <div className="container mx-auto px-4 py-10">
+        <div className={`max-w-2xl mx-auto p-8 rounded-xl shadow-lg ${
+          theme === 'dark' ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+        }`}>
+          <h1 className={`text-2xl md:text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Welcome to HerBid!
+          </h1>
+          <p className={`mb-6 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+            Let's set up your business profile to help you find the perfect contracts and partners.
+          </p>
+          
+          <div className={`p-6 mb-6 rounded-lg ${
+            theme === 'dark' ? 'bg-[#182052] border border-[#303974]' : 'bg-gray-50 border border-gray-200'
+          }`}>
+            <h2 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Why complete your profile?
+            </h2>
+            <ul className={`list-disc pl-5 space-y-2 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+              <li>Get matched with relevant contract opportunities</li>
+              <li>Find partners with complementary skills</li>
+              <li>Build credibility with clients and collaborators</li>
+              <li>Only takes 2 minutes to complete!</li>
+            </ul>
+          </div>
+          
+          <div className="flex justify-center">
+            <CustomButton 
+              size="lg"
+              onClick={handleSetupProfile}
+              className={theme === 'dark' 
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 px-8' 
+                : 'px-8'
+              }
+            >
+              Complete Your Profile
+            </CustomButton>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -240,10 +309,10 @@ const Dashboard = () => {
             <ChevronRight className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
           <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Secure Payments
+            Payment Protection
           </h3>
           <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-            Protect your earnings with step-by-step payments held securely until work is complete.
+            Get paid securely with milestone payments held safely until work is complete.
           </p>
           <CustomButton 
             size="sm" 
@@ -280,8 +349,13 @@ const Dashboard = () => {
         </div>
       </div>
       
+      {/* Recommended Contracts */}
+      <div className="mb-10">
+        <RecommendedContracts />
+      </div>
+      
       {/* Tabs */}
-      <Tabs defaultValue="opportunities" className="w-full mt-8">
+      <Tabs defaultValue={activeTab} className="w-full mt-8" onValueChange={setActiveTab}>
         <TabsList className={`w-full md:w-auto ${
           theme === 'dark' 
             ? 'bg-[#0A155A]/70 border border-[#303974]' 

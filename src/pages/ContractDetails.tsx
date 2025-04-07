@@ -1,776 +1,724 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
-import { useHedera } from '@/contexts/HederaContext';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { CustomCard, CustomCardContent, CustomCardHeader, CustomCardTitle } from '@/components/ui/CustomCard';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { 
-  Briefcase, Calendar, Clock, Users, Building2, 
-  DollarSign, Star, Heart, CheckCheck, ChevronLeft,
-  Video, FileText, FileCheck, Info, AlertCircle, CheckCircle, User, MessagesSquare
-} from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Building, Calendar, DollarSign, Users, Award, FileText, 
+  CheckCircle, Clock, Shield, MessageCircle
+} from 'lucide-react';
 import { toast } from 'sonner';
 
-// Sample contract data - in a real app this would come from an API
-const CONTRACT_DATA = {
-  id: "opp-123456",
-  title: "Government Digital Transformation Project",
-  client: "Department of Technology",
-  description: "This comprehensive project involves modernizing the digital infrastructure of a government agency. The selected team will develop new user interfaces, create API integrations, and implement a secure data management system. The project requires expertise in UX/UI design, full-stack development, project management, and change management.",
-  budget: "$150,000 - $200,000",
-  deadline: "September 30, 2023",
-  postedDate: "July 15, 2023",
-  duration: "12 months",
-  skills: ["UX/UI Design", "Full-stack Development", "Project Management", "Change Management", "API Integration", "Government Experience"],
-  status: "open",
-  matchScore: 87,
-  interestedBusinesses: 12,
-  views: 45,
-  location: "Remote with occasional on-site meetings",
-  milestones: [
-    { id: 1, title: "Requirements Gathering & Initial Design", amount: 30000, status: "pending", deadline: "November 30, 2023" },
-    { id: 2, title: "UI/UX Development", amount: 45000, status: "pending", deadline: "January 30, 2024" },
-    { id: 3, title: "Backend Integration", amount: 65000, status: "pending", deadline: "April 30, 2024" },
-    { id: 4, title: "Testing & Deployment", amount: 35000, status: "pending", deadline: "July 31, 2024" },
-    { id: 5, title: "Training & Handover", amount: 25000, status: "pending", deadline: "August 31, 2024" }
-  ],
-  suggestedPartners: [
-    { id: 1, name: "Sarah Johnson", business: "Johnson Design Studios", skills: ["UX/UI Design", "User Research"], matchScore: 94 },
-    { id: 2, name: "Maria Rodriguez", business: "Rodriguez Tech Solutions", skills: ["Full-stack Development", "API Integration"], matchScore: 91 },
-    { id: 3, name: "Latisha Williams", business: "Williams Project Management", skills: ["Project Management", "Change Management"], matchScore: 88 }
-  ]
-};
+interface Milestone {
+  id: number;
+  title: string;
+  description: string;
+  amount: string;
+  dueDate: string;
+  status: 'pending' | 'inProgress' | 'completed' | 'verified';
+}
+
+interface Partner {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  match: number;
+}
 
 const ContractDetails = () => {
-  const { theme } = useThemeStore();
-  const { isConnected, accountId } = useHedera();
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { theme } = useThemeStore();
   const isDark = theme === 'dark';
-  const [isApplying, setIsApplying] = useState(false);
-  const [showPartners, setShowPartners] = useState(false);
-  const [contractData, setContractData] = useState(CONTRACT_DATA);
-  const [selectedPartners, setSelectedPartners] = useState<number[]>([]);
-  const [applicationData, setApplicationData] = useState({
-    proposal: '',
-    price: '',
-    timeline: '',
-    approach: 'solo' // solo or team
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [showApplyForm, setShowApplyForm] = useState(false);
+  const [contract, setContract] = useState({
+    id: id || '1',
+    title: 'Government Digital Transformation Project',
+    client: 'Department of Technology',
+    description: 'Seeking a diverse team of experts to lead a 12-month digital transformation initiative. This project requires expertise in UX/UI design, full-stack development, project management, and change management. Perfect for a consortium of women-led businesses.',
+    detailedDescription: 'This comprehensive project aims to modernize our department\'s digital infrastructure and services. The selected team will be responsible for redesigning our public-facing web portal, creating a mobile application for citizens, integrating various backend systems, and providing thorough training to staff members. We\'re looking for a team with proven experience in government digital transformation and a strong track record of successful project delivery.',
+    budget: '$150K-200K',
+    deadline: 'August 15, 2023',
+    postedDate: 'June 7, 2023',
+    location: 'Remote with occasional on-site meetings in Washington, DC',
+    duration: '12 months',
+    tags: ['UX/UI Design', 'Development', 'Project Management', 'Change Management'],
+    matchScore: 92,
+    requiredTeamSize: 4,
+    status: 'open',
   });
-
-  // Check if user is authenticated
+  
+  const [milestones, setMilestones] = useState<Milestone[]>([
+    {
+      id: 1,
+      title: 'Project Planning & Requirements Gathering',
+      description: 'Conduct stakeholder interviews, document requirements, and create project roadmap.',
+      amount: '$40,000',
+      dueDate: 'Month 1',
+      status: 'pending',
+    },
+    {
+      id: 2,
+      title: 'Design Phase',
+      description: 'Create wireframes, user flows, UI designs, and get client approval.',
+      amount: '$35,000',
+      dueDate: 'Month 3',
+      status: 'pending',
+    },
+    {
+      id: 3,
+      title: 'Development: Phase 1',
+      description: 'Develop core functionality and backend integrations.',
+      amount: '$50,000',
+      dueDate: 'Month 6',
+      status: 'pending',
+    },
+    {
+      id: 4,
+      title: 'Development: Phase 2',
+      description: 'Implement remaining features and conduct internal testing.',
+      amount: '$35,000',
+      dueDate: 'Month 9',
+      status: 'pending',
+    },
+    {
+      id: 5,
+      title: 'Testing, Training & Launch',
+      description: 'User acceptance testing, staff training, and official launch.',
+      amount: '$40,000',
+      dueDate: 'Month 12',
+      status: 'pending',
+    },
+  ]);
+  
+  const [recommendedPartners, setRecommendedPartners] = useState<Partner[]>([
+    {
+      id: '1',
+      name: 'Jamie Davis',
+      role: 'UI/UX Designer',
+      avatar: 'JD',
+      match: 95,
+    },
+    {
+      id: '2',
+      name: 'Sarah Patel',
+      role: 'Project Manager',
+      avatar: 'SP',
+      match: 92,
+    },
+    {
+      id: '3',
+      name: 'Maya Thompson',
+      role: 'Software Developer',
+      avatar: 'MT',
+      match: 89,
+    },
+  ]);
+  
+  const [formData, setFormData] = useState({
+    approach: '',
+    price: '',
+    timeframe: '',
+    applyAsTeam: false,
+    selectedPartners: [] as string[],
+  });
+  
   useEffect(() => {
-    if (!isConnected) {
-      toast.error("Please connect your wallet to view contract details");
-      navigate("/auth");
-    }
-    
-    // In a real app, we would fetch the contract data based on the ID
-    console.log(`Fetching contract with ID: ${id}`);
-  }, [isConnected, navigate, id]);
-
-  const handleApply = () => {
-    setIsApplying(true);
-  };
-
-  const handlePartnerToggle = (partnerId: number) => {
-    if (selectedPartners.includes(partnerId)) {
-      setSelectedPartners(selectedPartners.filter(id => id !== partnerId));
-    } else {
-      setSelectedPartners([...selectedPartners, partnerId]);
-    }
-  };
-
-  const handleApproachChange = (approach: string) => {
-    setApplicationData({
-      ...applicationData,
-      approach
-    });
-    
-    if (approach === 'team') {
-      setShowPartners(true);
-    }
-  };
-
-  const handleSubmitApplication = () => {
-    // In a real app, we would submit the application to an API
-    toast.success("Your application has been submitted!");
-    setIsApplying(false);
-    
-    // For demo purposes, show a "contract awarded" message after a delay
+    // Simulate loading contract data
     setTimeout(() => {
-      toast.success("Congratulations! Your team has been awarded the contract!", {
-        duration: 5000
-      });
+      setIsLoading(false);
+    }, 1000);
+  }, [id]);
+  
+  const handleApplyClick = () => {
+    setShowApplyForm(true);
+  };
+  
+  const handlePartnerSelection = (partnerId: string) => {
+    setFormData(prev => {
+      const isAlreadySelected = prev.selectedPartners.includes(partnerId);
       
-      // Update the contract status
-      setContractData({
-        ...contractData,
-        status: "awarded"
-      });
-    }, 3000);
+      if (isAlreadySelected) {
+        return {
+          ...prev,
+          selectedPartners: prev.selectedPartners.filter(id => id !== partnerId)
+        };
+      } else {
+        return {
+          ...prev,
+          selectedPartners: [...prev.selectedPartners, partnerId]
+        };
+      }
+    });
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+  const handleSubmitApplication = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    toast.success("Application submitted successfully!");
+    
+    // Simulate application processing
+    setTimeout(() => {
+      navigate('/dashboard?tab=bids');
+    }, 2000);
   };
 
-  const renderMatchScore = (score: number) => {
-    let color = "text-green-500";
-    if (score < 70) color = "text-yellow-500";
-    if (score < 50) color = "text-red-500";
-    
+  if (isLoading) {
     return (
-      <div className="flex items-center">
-        <Star className={`h-5 w-5 ${color}`} />
-        <span className="ml-1 font-semibold">{score}%</span>
-        <span className="ml-1 text-sm">match</span>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className={`text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>
+            Loading contract details...
+          </div>
+        </div>
       </div>
     );
-  };
+  }
 
   return (
-    <div className="max-w-6xl mx-auto py-8">
-      <button 
-        onClick={() => navigate(-1)}
-        className={`inline-flex items-center mb-6 ${
-          isDark ? 'text-[#B2B9E1] hover:text-white' : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        <ChevronLeft className="h-4 w-4 mr-1" />
-        Back to Opportunities
-      </button>
-      
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Badge className={isDark ? 'bg-green-400/20 text-green-300' : 'bg-green-100 text-green-700'}>
-              Open
-            </Badge>
-            {renderMatchScore(contractData.matchScore)}
-          </div>
-          
-          <h1 className={`text-2xl md:text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-            {contractData.title}
-          </h1>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <Building2 className={`h-4 w-4 mr-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
-              <span className={isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}>
-                {contractData.client}
+    <div className="container mx-auto px-4 py-8">
+      {/* Contract Header */}
+      <div className={`p-6 mb-6 rounded-lg ${
+        isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+      }`}>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          <div>
+            <div className="flex items-center mb-2">
+              {contract.matchScore >= 90 && (
+                <Badge className={isDark ? 'bg-green-400/20 text-green-300 mr-2' : 'bg-green-100 text-green-700 mr-2'}>
+                  <Award className="mr-1 h-3 w-3" />
+                  Perfect Match
+                </Badge>
+              )}
+              <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                Posted on {contract.postedDate}
               </span>
             </div>
+            <h1 className={`text-2xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {contract.title}
+            </h1>
+            <div className="flex items-center text-sm">
+              <Building className={`mr-1 h-4 w-4 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+              <span className={isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}>
+                {contract.client}
+              </span>
+            </div>
+          </div>
+          
+          <div className="mt-4 md:mt-0 flex flex-col items-end">
+            <div className={`text-xl font-semibold mb-1 ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+              {contract.budget}
+            </div>
             <div className="flex items-center">
-              <Calendar className={`h-4 w-4 mr-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
-              <span className={isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}>
-                Posted: {contractData.postedDate}
+              <Clock className={`mr-1 h-4 w-4 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+              <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                Due {contract.deadline}
               </span>
             </div>
           </div>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-3">
-          <Dialog>
-            <DialogTrigger asChild>
-              <CustomButton 
-                variant="outline" 
-                className={isDark ? 'border-[#303974]' : ''}
-              >
-                <Heart className="h-4 w-4 mr-2" />
-                Save
-              </CustomButton>
-            </DialogTrigger>
-            <DialogContent className={isDark ? 'bg-[#0A155A] border-[#303974] text-white' : ''}>
-              <DialogHeader>
-                <DialogTitle>Save This Opportunity</DialogTitle>
-                <DialogDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                  This opportunity has been saved to your favorites. You can access it anytime from your dashboard.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex justify-end">
-                <CustomButton size="sm">View Saved Opportunities</CustomButton>
-              </div>
-            </DialogContent>
-          </Dialog>
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {contract.tags.map((tag, i) => (
+            <Badge 
+              key={i} 
+              variant="outline" 
+              className={isDark ? 'border-[#4A5BC2] text-[#B2B9E1]' : 'border-gray-200 text-gray-700'}
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+        
+        {/* Contract Details & Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="flex items-center">
+            <Calendar className={`mr-2 h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <div>
+              <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Duration</div>
+              <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>{contract.duration}</div>
+            </div>
+          </div>
           
-          {contractData.status === 'open' ? (
+          <div className="flex items-center">
+            <Users className={`mr-2 h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+            <div>
+              <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Team Size</div>
+              <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>{contract.requiredTeamSize} people needed</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <DollarSign className={`mr-2 h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+            <div>
+              <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Secured Payment</div>
+              <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>5 milestone payments</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* CTA Buttons */}
+        {!showApplyForm && (
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <CustomButton 
-              onClick={handleApply}
-              className={`${
-                isDark
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 border-none'
-                  : ''
-              }`}
+              size="lg" 
+              onClick={handleApplyClick}
+              className={isDark 
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0' 
+                : ''}
             >
               Apply for this Contract
             </CustomButton>
-          ) : (
             <CustomButton 
-              className={`${
-                isDark
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-green-600 hover:bg-green-700'
-              }`}
+              size="lg" 
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              className={isDark ? 'border-[#303974] text-[#B2B9E1] hover:bg-[#182052]' : ''}
             >
-              <CheckCheck className="h-4 w-4 mr-2" />
-              Contract Awarded
+              Go Back
             </CustomButton>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <DollarSign className={`h-5 w-5 mr-2 ${isDark ? 'text-green-300' : 'text-green-600'}`} />
-              Budget
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">{contractData.budget}</p>
-            <p className={`text-sm mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-              Total contract value
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Clock className={`h-5 w-5 mr-2 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
-              Timeline
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">{contractData.duration}</p>
-            <p className={`text-sm mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-              Deadline: {contractData.deadline}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Users className={`h-5 w-5 mr-2 ${isDark ? 'text-purple-300' : 'text-purple-600'}`} />
-              Team Size Needed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">3-5 People</p>
-            <p className={`text-sm mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-              Perfect for a small team
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="details" className="w-full">
-        <TabsList className={`w-full md:w-auto ${
-          isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-gray-100 border border-gray-200'
-        } p-1 mb-6`}>
-          <TabsTrigger 
-            value="details" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
-          >
-            Details
-          </TabsTrigger>
-          <TabsTrigger 
-            value="milestones" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
-          >
-            Payment Milestones
-          </TabsTrigger>
-          <TabsTrigger 
-            value="partners" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
-          >
-            Suggested Partners
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <CardTitle>Contract Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+      {showApplyForm ? (
+        <div className={`p-6 rounded-lg mb-6 ${
+          isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+        }`}>
+          <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Apply for Contract
+          </h2>
+          
+          <form onSubmit={handleSubmitApplication}>
+            <div className="space-y-4 mb-6">
               <div>
-                <h3 className="text-lg font-medium mb-2">Description</h3>
-                <p className={isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                  {contractData.description}
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">Required Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {contractData.skills.map((skill, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className={`${
-                        isDark 
-                          ? 'bg-[#4A5BC2]/20 border-[#4A5BC2]' 
-                          : 'bg-primary/10 border-primary/30'
-                      }`}
-                    >
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">Location</h3>
-                <p className={isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                  {contractData.location}
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">Contract Stats</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={`p-3 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                    <div className="flex items-center">
-                      <Users className={`h-5 w-5 mr-2 ${isDark ? 'text-purple-300' : 'text-purple-600'}`} />
-                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Interested Businesses
-                      </span>
-                    </div>
-                    <p className="text-xl font-semibold mt-1">{contractData.interestedBusinesses}</p>
-                  </div>
-                  
-                  <div className={`p-3 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                    <div className="flex items-center">
-                      <Info className={`h-5 w-5 mr-2 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
-                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Profile Views
-                      </span>
-                    </div>
-                    <p className="text-xl font-semibold mt-1">{contractData.views}</p>
-                  </div>
-                  
-                  <div className={`p-3 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                    <div className="flex items-center">
-                      <Star className={`h-5 w-5 mr-2 ${isDark ? 'text-yellow-300' : 'text-yellow-600'}`} />
-                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Match Score
-                      </span>
-                    </div>
-                    <p className="text-xl font-semibold mt-1">{contractData.matchScore}%</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="milestones">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <CardTitle>Payment Protection Milestones</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className={`mb-6 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                This contract is broken down into milestone payments. Each payment is held safely in a secure account until you complete the work and the client approves it.
-              </p>
-              
-              <div className="space-y-8">
-                {contractData.milestones.map((milestone, index) => (
-                  <div key={milestone.id} className="relative">
-                    {/* Vertical timeline connector */}
-                    {index < contractData.milestones.length - 1 && (
-                      <div className={`absolute left-4 top-10 bottom-0 w-0.5 ${
-                        isDark ? 'bg-[#303974]' : 'bg-gray-200'
-                      }`}></div>
-                    )}
-                    
-                    <div className="flex">
-                      <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full ${
-                        milestone.status === 'complete' 
-                          ? isDark 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-green-100 text-green-600'
-                          : isDark 
-                            ? 'bg-[#303974] text-[#B2B9E1]' 
-                            : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {milestone.status === 'complete' 
-                          ? <CheckCircle className="h-5 w-5" /> 
-                          : index + 1
-                        }
-                      </div>
-                      
-                      <div className="ml-4 flex-grow">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                          <h3 className="text-lg font-medium">{milestone.title}</h3>
-                          <div className={`md:text-right font-semibold ${
-                            isDark ? 'text-green-300' : 'text-green-600'
-                          }`}>
-                            ${milestone.amount.toLocaleString()}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-2">
-                          <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                            <Calendar className="inline h-4 w-4 mr-1" />
-                            Due: {milestone.deadline}
-                          </p>
-                          <Badge className={`mt-2 md:mt-0 w-fit ${
-                            milestone.status === 'complete'
-                              ? isDark 
-                                ? 'bg-green-500/20 text-green-300' 
-                                : 'bg-green-100 text-green-700'
-                              : isDark 
-                                ? 'bg-blue-500/20 text-blue-300' 
-                                : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {milestone.status === 'complete' ? 'Completed' : 'Pending'}
-                          </Badge>
-                        </div>
-                        
-                        {contractData.status === 'awarded' && milestone.status !== 'complete' && (
-                          <CustomButton 
-                            size="sm" 
-                            variant="outline"
-                            className="mt-3"
-                          >
-                            <FileCheck className="h-4 w-4 mr-1" />
-                            Mark as Complete
-                          </CustomButton>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className={`mt-8 p-4 rounded-lg ${
-                isDark ? 'bg-[#181F6A]' : 'bg-gray-50'
-              }`}>
-                <div className="flex items-center mb-2">
-                  <AlertCircle className={`h-5 w-5 mr-2 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
-                  <h3 className="text-lg font-medium">How Secure Payments Work</h3>
-                </div>
-                <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                  When you're awarded this contract, the client deposits the full payment into a secure account on the Hedera blockchain. As you complete each milestone, you request payment, and once the client approves, the funds are released directly to your account. This ensures you always get paid for your work.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="partners">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <CardTitle>Suggested Partners</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className={`mb-6 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                Based on the skills needed for this contract, we've found these potential partners who complement your expertise. Team up to increase your chances of winning!
-              </p>
-              
-              <div className="space-y-4">
-                {contractData.suggestedPartners.map((partner) => (
-                  <div 
-                    key={partner.id} 
-                    className={`p-4 rounded-lg border flex flex-col md:flex-row md:items-center ${
-                      isDark 
-                        ? 'border-[#303974] bg-[#181F6A]' 
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center flex-grow">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className={`${
-                          isDark ? 'bg-[#4A5BC2]/20 text-[#B2B9E1]' : 'bg-primary/10 text-primary'
-                        }`}>
-                          {partner.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="ml-3 flex-grow">
-                        <h3 className="font-medium">{partner.name}</h3>
-                        <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                          {partner.business}
-                        </p>
-                      </div>
-                      
-                      <div className="hidden md:block">
-                        <div className="flex items-center">
-                          <Star className={`h-4 w-4 ${
-                            partner.matchScore > 90 
-                              ? 'text-yellow-400' 
-                              : partner.matchScore > 80 
-                                ? 'text-green-400' 
-                                : 'text-blue-400'
-                          }`} />
-                          <span className="ml-1 font-medium">{partner.matchScore}%</span>
-                          <span className="ml-1 text-xs">match</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 md:mt-0 md:ml-4 flex flex-wrap gap-2">
-                      {partner.skills.map((skill, idx) => (
-                        <Badge 
-                          key={idx} 
-                          variant="outline" 
-                          className={`${
-                            isDark 
-                              ? 'bg-[#4A5BC2]/20 border-[#4A5BC2]' 
-                              : 'bg-primary/10 border-primary/30'
-                          }`}
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-4 md:mt-0 md:ml-4 flex gap-2">
-                      <CustomButton 
-                        size="sm" 
-                        variant="outline"
-                        className={`flex-1 md:flex-none ${
-                          isDark ? 'border-[#303974]' : ''
-                        }`}
-                      >
-                        <User className="h-4 w-4 mr-1" />
-                        Profile
-                      </CustomButton>
-                      <CustomButton 
-                        size="sm"
-                        className="flex-1 md:flex-none"
-                      >
-                        <MessagesSquare className="h-4 w-4 mr-1" />
-                        Connect
-                      </CustomButton>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {isApplying && (
-        <Dialog open={isApplying} onOpenChange={setIsApplying}>
-          <DialogContent className={`max-w-3xl ${isDark ? 'bg-[#0A155A] border-[#303974] text-white' : ''}`}>
-            <DialogHeader>
-              <DialogTitle className="text-xl">Apply for Contract</DialogTitle>
-              <DialogDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                Tell us about your approach to this project and how you'll deliver success.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6">
-              <div>
-                <label className={`block font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  How would you like to apply?
-                </label>
-                <div className="flex flex-col md:flex-row gap-4">
-                  <button
-                    onClick={() => handleApproachChange('solo')}
-                    className={`p-4 rounded-lg border flex-1 text-left ${
-                      applicationData.approach === 'solo'
-                        ? isDark 
-                          ? 'border-purple-500 bg-purple-500/20' 
-                          : 'border-primary bg-primary/10'
-                        : isDark 
-                          ? 'border-[#303974] bg-[#181F6A]' 
-                          : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center mb-2">
-                      <User className={`h-5 w-5 mr-2 ${
-                        applicationData.approach === 'solo'
-                          ? isDark ? 'text-purple-300' : 'text-primary' 
-                          : isDark ? 'text-[#B2B9E1]' : 'text-gray-500'
-                      }`} />
-                      <h3 className="font-medium">Apply Solo</h3>
-                    </div>
-                    <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                      Submit an application as an individual business
-                    </p>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleApproachChange('team')}
-                    className={`p-4 rounded-lg border flex-1 text-left ${
-                      applicationData.approach === 'team'
-                        ? isDark 
-                          ? 'border-purple-500 bg-purple-500/20' 
-                          : 'border-primary bg-primary/10'
-                        : isDark 
-                          ? 'border-[#303974] bg-[#181F6A]' 
-                          : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center mb-2">
-                      <Users className={`h-5 w-5 mr-2 ${
-                        applicationData.approach === 'team'
-                          ? isDark ? 'text-purple-300' : 'text-primary' 
-                          : isDark ? 'text-[#B2B9E1]' : 'text-gray-500'
-                      }`} />
-                      <h3 className="font-medium">Team Up (Recommended)</h3>
-                    </div>
-                    <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                      Apply with partners who have complementary skills
-                    </p>
-                  </button>
-                </div>
-              </div>
-              
-              {showPartners && (
-                <div>
-                  <label className={`block font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Select Partners to Team Up With
-                  </label>
-                  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
-                    {contractData.suggestedPartners.map((partner) => (
-                      <div 
-                        key={partner.id} 
-                        className={`p-3 rounded-lg border flex items-center ${
-                          selectedPartners.includes(partner.id)
-                            ? isDark 
-                              ? 'border-purple-500 bg-purple-500/20' 
-                              : 'border-primary bg-primary/10'
-                            : isDark 
-                              ? 'border-[#303974] bg-[#181F6A]' 
-                              : 'border-gray-200 bg-white'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedPartners.includes(partner.id)}
-                          onChange={() => handlePartnerToggle(partner.id)}
-                          className="mr-3"
-                        />
-                        
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className={`${
-                            isDark ? 'bg-[#4A5BC2]/20 text-[#B2B9E1]' : 'bg-primary/10 text-primary'
-                          }`}>
-                            {partner.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="ml-3 flex-grow">
-                          <h3 className="font-medium">{partner.name}</h3>
-                          <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                            {partner.business}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <Star className={`h-4 w-4 ${
-                            partner.matchScore > 90 
-                              ? 'text-yellow-400' 
-                              : partner.matchScore > 80 
-                                ? 'text-green-400' 
-                                : 'text-blue-400'
-                          }`} />
-                          <span className="ml-1 font-medium">{partner.matchScore}%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div>
-                <label className={`block font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Project Approach
+                <label 
+                  className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}
+                  htmlFor="approach"
+                >
+                  Your Approach
                 </label>
                 <textarea
-                  placeholder="Describe how you'll approach this project and what makes you the right team for the job..."
-                  value={applicationData.proposal}
-                  onChange={(e) => setApplicationData({...applicationData, proposal: e.target.value})}
-                  className={`w-full min-h-[120px] p-3 rounded-lg border ${
-                    isDark ? 'bg-[#181F6A] border-[#303974] text-white' : 'border-gray-300'
-                  }`}
+                  id="approach"
+                  name="approach"
+                  rows={4}
+                  required
+                  value={formData.approach}
+                  onChange={handleInputChange}
+                  placeholder="Describe how you would approach this project..."
+                  className={`w-full p-3 rounded-md ${
+                    isDark 
+                      ? 'bg-[#182052] border-[#303974] text-white placeholder-[#8891C5]' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } focus:ring-2 focus:ring-purple-500`}
                 />
+                <p className={`text-xs mt-1 ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+                  Be specific about your methodology and experience with similar projects
+                </p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={`block font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <label 
+                    className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}
+                    htmlFor="price"
+                  >
                     Your Proposed Budget
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. $175,000"
-                    value={applicationData.price}
-                    onChange={(e) => setApplicationData({...applicationData, price: e.target.value})}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark ? 'bg-[#181F6A] border-[#303974] text-white' : 'border-gray-300'
-                    }`}
+                    id="price"
+                    name="price"
+                    required
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="e.g., $175,000"
+                    className={`w-full p-3 rounded-md ${
+                      isDark 
+                        ? 'bg-[#182052] border-[#303974] text-white placeholder-[#8891C5]' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500`}
                   />
                 </div>
                 
                 <div>
-                  <label className={`block font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Estimated Timeline
+                  <label 
+                    className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}
+                    htmlFor="timeframe"
+                  >
+                    Your Proposed Timeline
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 10 months"
-                    value={applicationData.timeline}
-                    onChange={(e) => setApplicationData({...applicationData, timeline: e.target.value})}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark ? 'bg-[#181F6A] border-[#303974] text-white' : 'border-gray-300'
-                    }`}
+                    id="timeframe"
+                    name="timeframe"
+                    required
+                    value={formData.timeframe}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 10 months"
+                    className={`w-full p-3 rounded-md ${
+                      isDark 
+                        ? 'bg-[#182052] border-[#303974] text-white placeholder-[#8891C5]' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500`}
                   />
                 </div>
               </div>
               
-              <div className="flex justify-end gap-4 mt-4">
-                <CustomButton 
-                  variant="outline" 
-                  onClick={() => setIsApplying(false)}
-                  className={isDark ? 'border-[#303974]' : ''}
-                >
-                  Cancel
-                </CustomButton>
-                <CustomButton 
-                  onClick={handleSubmitApplication}
-                  className={`${
-                    isDark
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 border-none'
-                      : ''
-                  }`}
-                >
-                  Submit Application
-                </CustomButton>
+              <div>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="applyAsTeam"
+                    name="applyAsTeam"
+                    checked={formData.applyAsTeam}
+                    onChange={handleCheckboxChange}
+                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <label 
+                    htmlFor="applyAsTeam" 
+                    className={`ml-2 block text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}
+                  >
+                    Apply with partners (recommended for this contract)
+                  </label>
+                </div>
+                
+                {formData.applyAsTeam && (
+                  <div className="mt-3">
+                    <div className={`mb-2 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      Recommended Partners for You:
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {recommendedPartners.map((partner) => (
+                        <div 
+                          key={partner.id}
+                          onClick={() => handlePartnerSelection(partner.id)}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            formData.selectedPartners.includes(partner.id)
+                              ? isDark
+                                ? 'border-purple-500 bg-purple-500/20'
+                                : 'border-purple-500 bg-purple-50'
+                              : isDark
+                                ? 'border-[#303974] hover:border-[#4A5BC2]'
+                                : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <Avatar className="h-10 w-10 mr-3">
+                              <AvatarFallback className={`${
+                                isDark ? 'bg-[#182052] text-[#B2B9E1]' : 'bg-purple-100 text-purple-700'
+                              }`}>
+                                {partner.avatar}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                {partner.name}
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                                {partner.role}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <Badge className={
+                              isDark ? 'bg-green-400/20 text-green-300' : 'bg-green-100 text-green-700'
+                            }>
+                              {partner.match}% Match
+                            </Badge>
+                            {formData.selectedPartners.includes(partner.id) && (
+                              <CheckCircle className="h-4 w-4 text-purple-500" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+            
+            <div className="flex justify-between">
+              <CustomButton
+                variant="outline"
+                type="button"
+                onClick={() => setShowApplyForm(false)}
+                className={isDark ? 'border-[#303974] text-[#B2B9E1] hover:bg-[#182052]' : ''}
+              >
+                Back
+              </CustomButton>
+              <CustomButton type="submit">
+                Submit Application
+              </CustomButton>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <>
+          {/* Contract Tabs */}
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className={`w-full md:w-auto ${
+              isDark 
+                ? 'bg-[#0A155A]/70 border border-[#303974]' 
+                : 'bg-gray-100 border border-gray-200'
+            } p-1 mb-6`}>
+              <TabsTrigger 
+                value="details" 
+                className={`${
+                  isDark
+                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+                }`}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger 
+                value="milestones" 
+                className={`${
+                  isDark
+                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+                }`}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Milestones
+              </TabsTrigger>
+              <TabsTrigger 
+                value="partners" 
+                className={`${
+                  isDark
+                    ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
+                    : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+                }`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Suggested Partners
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="mt-0">
+              <CustomCard className={isDark 
+                ? 'bg-[#0A155A]/70 border border-[#303974]' 
+                : 'bg-white border border-gray-200'
+              }>
+                <CustomCardHeader>
+                  <CustomCardTitle className={isDark ? 'text-white' : ''}>
+                    Project Details
+                  </CustomCardTitle>
+                </CustomCardHeader>
+                <CustomCardContent>
+                  <p className={`mb-6 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                    {contract.detailedDescription}
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+                    <div>
+                      <h3 className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Project Location
+                      </h3>
+                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                        {contract.location}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Required Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {contract.tags.map((tag, i) => (
+                          <Badge key={i} variant="outline">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Project Budget
+                      </h3>
+                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                        {contract.budget}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Team Size Needed
+                      </h3>
+                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                        {contract.requiredTeamSize} team members with complementary skills
+                      </p>
+                    </div>
+                  </div>
+                </CustomCardContent>
+              </CustomCard>
+            </TabsContent>
+            
+            <TabsContent value="milestones" className="mt-0">
+              <CustomCard className={isDark 
+                ? 'bg-[#0A155A]/70 border border-[#303974]' 
+                : 'bg-white border border-gray-200'
+              }>
+                <CustomCardHeader>
+                  <CustomCardTitle className={isDark ? 'text-white' : ''}>
+                    <div className="flex items-center">
+                      <Shield className="h-5 w-5 mr-2 text-green-500" />
+                      Payment Protection Milestones
+                    </div>
+                  </CustomCardTitle>
+                  <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                    This contract uses secure milestone payments. Payment for each phase is held safely in escrow until work is completed.
+                  </p>
+                </CustomCardHeader>
+                <CustomCardContent>
+                  <div className="space-y-6 relative">
+                    {/* Vertical line connecting milestones */}
+                    <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-purple-500 to-pink-500"></div>
+                    
+                    {milestones.map((milestone, index) => (
+                      <div key={milestone.id} className="flex">
+                        <div className="relative">
+                          <div className={`
+                            w-12 h-12 rounded-full flex items-center justify-center 
+                            ${isDark ? 'bg-[#182052] text-[#B2B9E1]' : 'bg-gray-100 text-gray-600'}
+                            border-2 ${index === 0 ? 'border-purple-500' : 'border-gray-300'}
+                          `}>
+                            {index + 1}
+                          </div>
+                        </div>
+                        
+                        <div className="ml-4 flex-1">
+                          <CustomCard className={`
+                            transition-all duration-200
+                            ${isDark 
+                              ? 'bg-[#182052]/80 border-[#303974] hover:border-purple-500/40' 
+                              : 'bg-white border-gray-200 hover:border-purple-300/60'
+                            }
+                          `}>
+                            <CustomCardContent className="p-4">
+                              <div className="flex flex-col md:flex-row justify-between">
+                                <div>
+                                  <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                    {milestone.title}
+                                  </h3>
+                                  <p className={`text-sm mb-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                                    {milestone.description}
+                                  </p>
+                                </div>
+                                <div className="mt-2 md:mt-0 md:ml-4 md:text-right">
+                                  <div className={`font-semibold ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+                                    {milestone.amount}
+                                  </div>
+                                  <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                                    Due: {milestone.dueDate}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex items-center">
+                                <Shield className={`h-4 w-4 mr-1 ${isDark ? 'text-green-300' : 'text-green-600'}`} />
+                                <span className={`text-xs ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+                                  Payment protected in escrow
+                                </span>
+                              </div>
+                            </CustomCardContent>
+                          </CustomCard>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CustomCardContent>
+              </CustomCard>
+            </TabsContent>
+            
+            <TabsContent value="partners" className="mt-0">
+              <CustomCard className={isDark 
+                ? 'bg-[#0A155A]/70 border border-[#303974]' 
+                : 'bg-white border border-gray-200'
+              }>
+                <CustomCardHeader>
+                  <CustomCardTitle className={isDark ? 'text-white' : ''}>
+                    <div className="flex items-center">
+                      <Users className="h-5 w-5 mr-2 text-purple-500" />
+                      Suggested Partners
+                    </div>
+                  </CustomCardTitle>
+                  <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                    Based on the contract requirements, here are women entrepreneurs who would complement your skills.
+                  </p>
+                </CustomCardHeader>
+                <CustomCardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {recommendedPartners.map((partner) => (
+                      <div 
+                        key={partner.id}
+                        className={`p-4 rounded-lg border ${
+                          isDark
+                            ? 'border-[#303974] hover:border-purple-500/50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        } transition-all duration-200`}
+                      >
+                        <div className="flex items-center mb-3">
+                          <Avatar className="h-10 w-10 mr-3">
+                            <AvatarFallback className={`${
+                              isDark ? 'bg-[#182052] text-[#B2B9E1]' : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {partner.avatar}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              {partner.name}
+                            </div>
+                            <div className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                              {partner.role}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-3">
+                          <Badge className={
+                            isDark ? 'bg-green-400/20 text-green-300' : 'bg-green-100 text-green-700'
+                          }>
+                            <Award className="mr-1 h-3 w-3" />
+                            {partner.match}% Match
+                          </Badge>
+                        </div>
+                        
+                        <CustomButton 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => toast.success(`Invitation sent to ${partner.name}!`)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          Connect
+                        </CustomButton>
+                      </div>
+                    ))}
+                  </div>
+                </CustomCardContent>
+              </CustomCard>
+            </TabsContent>
+          </Tabs>
+        </>
       )}
     </div>
   );

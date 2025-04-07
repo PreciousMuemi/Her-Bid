@@ -1,848 +1,898 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useThemeStore } from '@/store/themeStore';
-import { useHedera } from '@/contexts/HederaContext';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { CustomButton } from '@/components/ui/CustomButton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Building2, User, Award, Briefcase, Star, Plus, UploadCloud, Trash2, CheckCircle2, Edit, FileText, Users, BarChart3 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useThemeStore } from "@/store/themeStore";
+import { CustomButton } from "@/components/ui/CustomButton";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Award, Building2, FileText, Briefcase, Phone, Mail, Globe, 
+  MapPin, Edit2, Upload, Star, Users, Shield, Calendar, User, CheckCircle
+} from "lucide-react";
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Sample industries and skills for dropdowns
-const INDUSTRIES = [
-  'Technology', 'Marketing', 'Finance', 'Healthcare', 'Education', 
-  'Real Estate', 'Retail', 'Manufacturing', 'Consulting', 'Design'
-];
+interface ProfileFormData {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  website: string;
+  location: string;
+  businessType: string;
+  description: string;
+  foundedYear: string;
+  employeeCount: string;
+  skills: string[];
+  certifications: string[];
+}
 
-const SKILLS = [
-  'Project Management', 'Web Development', 'UI/UX Design', 'Digital Marketing',
-  'Content Creation', 'Social Media', 'Financial Analysis', 'Event Planning',
-  'Data Analysis', 'Graphic Design', 'Sales', 'Customer Service',
-  'Software Development', 'Logistics', 'Product Management'
-];
-
-const ProfilePage = () => {
-  const { theme } = useThemeStore();
-  const { isConnected, accountId } = useHedera();
+const Profile = () => {
   const navigate = useNavigate();
+  const { theme } = useThemeStore();
   const isDark = theme === 'dark';
-  const [profileCompletion, setProfileCompletion] = useState(30);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedTab, setSelectedTab] = useState('profile');
-  
-  const form = useForm({
-    defaultValues: {
-      businessName: '',
-      ownerName: '',
-      email: '',
-      phone: '',
-      industry: '',
-      description: '',
-      website: '',
-      certifications: '',
-      yearFounded: '',
-      teamSize: '',
-    }
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState<ProfileFormData>({
+    firstName: '',
+    lastName: '',
+    businessName: '',
+    email: '',
+    phone: '',
+    website: '',
+    location: '',
+    businessType: '',
+    description: '',
+    foundedYear: '',
+    employeeCount: '',
+    skills: [],
+    certifications: []
   });
   
-  // Load user profile if available
+  const [verifications, setVerifications] = useState({
+    womanOwned: true,
+    identityVerified: true,
+    businessRegistered: true,
+  });
+  
+  // Stats for profile
+  const stats = [
+    { 
+      title: "Reputation Score", 
+      value: "92%", 
+      icon: <Award className={`h-5 w-5 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />,
+      description: "Based on completed contracts"
+    },
+    { 
+      title: "Team Members", 
+      value: "4", 
+      icon: <Users className={`h-5 w-5 ${isDark ? "text-purple-400" : "text-purple-600"}`} />,
+      description: "In your business"
+    },
+    { 
+      title: "Contracts", 
+      value: "12", 
+      icon: <FileText className={`h-5 w-5 ${isDark ? "text-blue-400" : "text-blue-600"}`} />,
+      description: "Successfully completed"
+    },
+    { 
+      title: "Payment Success", 
+      value: "100%", 
+      icon: <Shield className={`h-5 w-5 ${isDark ? "text-green-400" : "text-green-600"}`} />,
+      description: "On-time contract payments"
+    }
+  ];
+  
+  // Load profile data
   useEffect(() => {
-    const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
+    const savedProfile = localStorage.getItem('userProfile');
+    if (savedProfile) {
       try {
-        const profile = JSON.parse(storedProfile);
-        form.reset(profile);
-        if (profile.skills) {
-          setSelectedSkills(profile.skills.split(','));
-        }
-        calculateProfileCompletion(profile);
+        const parsedProfile = JSON.parse(savedProfile);
+        setProfileData({
+          ...profileData,
+          ...parsedProfile
+        });
       } catch (e) {
-        console.error("Error parsing stored profile", e);
+        console.error("Error parsing profile data", e);
       }
     }
-    
-    // Check auth status
-    if (!isConnected) {
-      toast.error("Please connect your wallet to access your profile");
-      navigate("/auth");
-    }
-  }, [form, navigate, isConnected]);
+  }, []);
   
-  const calculateProfileCompletion = (profile: any) => {
-    const totalFields = 10;
-    let filledFields = 0;
-    
-    Object.keys(profile).forEach(key => {
-      if (profile[key] && profile[key].trim() !== '') {
-        filledFields++;
-      }
-    });
-    
-    if (selectedSkills.length > 0) filledFields++;
-    
-    const completion = Math.floor((filledFields / totalFields) * 100);
-    setProfileCompletion(completion);
+  // Handle profile editing
+  const handleEditProfile = () => {
+    setIsEditing(true);
   };
   
-  const handleSkillAdd = (skill: string) => {
-    if (!selectedSkills.includes(skill)) {
-      setSelectedSkills([...selectedSkills, skill]);
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const skills = e.target.value.split(',').map(skill => skill.trim());
+    setProfileData(prev => ({
+      ...prev,
+      skills
+    }));
+  };
+  
+  const handleCertificationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const certifications = e.target.value.split(',').map(cert => cert.trim());
+    setProfileData(prev => ({
+      ...prev,
+      certifications
+    }));
+  };
+  
+  const handleSaveProfile = () => {
+    // Validate required fields
+    if (!profileData.businessName || !profileData.email) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-  };
-  
-  const handleSkillRemove = (skill: string) => {
-    setSelectedSkills(selectedSkills.filter(s => s !== skill));
-  };
-  
-  const onSubmit = (data: any) => {
-    // Add skills to the data
-    const updatedData = {
-      ...data,
-      skills: selectedSkills.join(',')
-    };
     
-    // Save to localStorage for demo purposes
-    localStorage.setItem('userProfile', JSON.stringify(updatedData));
-    calculateProfileCompletion(updatedData);
-    
-    toast.success("Profile updated successfully");
+    try {
+      localStorage.setItem('userProfile', JSON.stringify({
+        ...profileData,
+        completedProfile: true
+      }));
+      toast.success("Profile updated successfully");
+      setIsEditing(false);
+    } catch (e) {
+      console.error("Error saving profile", e);
+      toast.error("Failed to save profile");
+    }
   };
   
-  // Sample portfolio projects
-  const portfolioProjects = [
-    {
-      id: 1,
-      title: "Website Redesign",
-      client: "Local Retail Store",
-      description: "Complete website redesign with focus on mobile responsiveness and customer engagement.",
-      skills: ["Web Development", "UI/UX Design", "Content Creation"],
-      year: 2023
-    },
-    {
-      id: 2,
-      title: "Marketing Campaign",
-      client: "Healthcare Provider",
-      description: "Developed and executed a comprehensive marketing strategy that increased patient inquiries by 35%.",
-      skills: ["Digital Marketing", "Social Media", "Content Creation"],
-      year: 2022
-    }
-  ];
-  
-  // Sample connections/partners
-  const connections = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      business: "Johnson Design Studios",
-      industry: "Design",
-      matchScore: 92
-    },
-    {
-      id: 2,
-      name: "Maria Rodriguez",
-      business: "Rodriguez Marketing Group",
-      industry: "Marketing",
-      matchScore: 88
-    },
-    {
-      id: 3,
-      name: "Latisha Williams",
-      business: "Williams Tech Solutions",
-      industry: "Technology",
-      matchScore: 85
-    }
-  ];
-  
-  return (
-    <div className="max-w-6xl mx-auto py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+  // Business details display component
+  const BusinessDetails = () => (
+    <div className={`p-6 rounded-lg ${
+      isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+    }`}>
+      <div className="flex justify-between items-start mb-4">
+        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Business Details
+        </h2>
+        <CustomButton 
+          variant="outline" 
+          size="sm"
+          onClick={handleEditProfile}
+        >
+          <Edit2 className="h-4 w-4 mr-2" />
+          Edit Profile
+        </CustomButton>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
         <div>
-          <h1 className={`text-3xl md:text-4xl font-bold ${isDark ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' : 'text-gray-900'} mb-2`}>
-            Your Profile
-          </h1>
-          <p className={`${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'} max-w-2xl`}>
-            Complete your profile to increase your visibility and match with the right opportunities.
+          <p className={`text-sm font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Business Type
+          </p>
+          <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {profileData.businessType || 'Not specified'}
           </p>
         </div>
         
-        <div className={`flex flex-col p-4 rounded-lg ${
-          isDark ? 'bg-[#0A155A]/70 border-[#303974]' : 'bg-white border border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>Profile Completion</span>
-            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{profileCompletion}%</span>
-          </div>
-          <Progress value={profileCompletion} className={isDark ? 'bg-[#303974]' : 'bg-gray-200'} />
+        <div>
+          <p className={`text-sm font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Founded
+          </p>
+          <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {profileData.foundedYear || 'Not specified'}
+          </p>
+        </div>
+        
+        <div>
+          <p className={`text-sm font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Team Size
+          </p>
+          <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {profileData.employeeCount || 'Not specified'} employees
+          </p>
+        </div>
+        
+        <div>
+          <p className={`text-sm font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Location
+          </p>
+          <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {profileData.location || 'Not specified'}
+          </p>
         </div>
       </div>
       
-      <Tabs defaultValue="profile" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className={`w-full md:w-auto ${
-          isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-gray-100 border border-gray-200'
-        } p-1 mb-6`}>
-          <TabsTrigger 
-            value="profile" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
+      <div className="mt-6">
+        <p className={`text-sm font-medium mb-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+          Business Description
+        </p>
+        <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+          {profileData.description || 'No business description provided.'}
+        </p>
+      </div>
+      
+      <div className="mt-6">
+        <p className={`text-sm font-medium mb-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+          Key Skills & Expertise
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {profileData.skills && profileData.skills.length > 0 ? (
+            profileData.skills.map((skill, index) => (
+              <Badge key={index} variant={isDark ? 'outline' : 'secondary'} className={isDark ? 'border-[#4A5BC2] text-[#B2B9E1]' : ''}>
+                {skill}
+              </Badge>
+            ))
+          ) : (
+            <p className={`text-sm ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+              No skills specified
+            </p>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-6">
+        <p className={`text-sm font-medium mb-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+          Certifications
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {profileData.certifications && profileData.certifications.length > 0 ? (
+            profileData.certifications.map((cert, index) => (
+              <Badge key={index} className={isDark ? 'bg-green-400/20 text-green-300' : 'bg-green-100 text-green-700'}>
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {cert}
+              </Badge>
+            ))
+          ) : (
+            <p className={`text-sm ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+              No certifications specified
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+  
+  // Edit profile form component
+  const EditProfileForm = () => (
+    <div className={`p-6 rounded-lg ${
+      isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+    }`}>
+      <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        Edit Profile
+      </h2>
+      
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              First Name
+            </label>
+            <input 
+              type="text" 
+              name="firstName" 
+              value={profileData.firstName} 
+              onChange={handleInputChange} 
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Last Name
+            </label>
+            <input 
+              type="text" 
+              name="lastName" 
+              value={profileData.lastName} 
+              onChange={handleInputChange} 
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+            Business Name*
+          </label>
+          <input 
+            type="text" 
+            name="businessName" 
+            value={profileData.businessName} 
+            onChange={handleInputChange} 
+            required
+            className={`w-full p-2 rounded-md ${
+              isDark 
+                ? 'bg-[#182052] border-[#303974] text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Email*
+            </label>
+            <input 
+              type="email" 
+              name="email" 
+              value={profileData.email} 
+              onChange={handleInputChange} 
+              required
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Phone
+            </label>
+            <input 
+              type="tel" 
+              name="phone" 
+              value={profileData.phone} 
+              onChange={handleInputChange} 
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Website
+            </label>
+            <input 
+              type="url" 
+              name="website" 
+              value={profileData.website} 
+              onChange={handleInputChange} 
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Location
+            </label>
+            <input 
+              type="text" 
+              name="location" 
+              value={profileData.location} 
+              onChange={handleInputChange} 
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+              Business Type
+            </label>
+            <select
+              name="businessType"
+              value={profileData.businessType}
+              onChange={handleInputChange}
+              className={`w-full p-2 rounded-md ${
+                isDark 
+                  ? 'bg-[#182052] border-[#303974] text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            >
+              <option value="">Select Business Type</option>
+              <option value="Consulting">Consulting</option>
+              <option value="Design & Creative">Design & Creative</option>
+              <option value="Technology">Technology</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Professional Services">Professional Services</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Retail">Retail</option>
+              <option value="Construction">Construction</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Education">Education</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                Founded Year
+              </label>
+              <input 
+                type="text" 
+                name="foundedYear" 
+                value={profileData.foundedYear} 
+                onChange={handleInputChange} 
+                placeholder="e.g. 2018"
+                className={`w-full p-2 rounded-md ${
+                  isDark 
+                    ? 'bg-[#182052] border-[#303974] text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+                Team Size
+              </label>
+              <select
+                name="employeeCount"
+                value={profileData.employeeCount}
+                onChange={handleInputChange}
+                className={`w-full p-2 rounded-md ${
+                  isDark 
+                    ? 'bg-[#182052] border-[#303974] text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="">Select Size</option>
+                <option value="Just me">Just me</option>
+                <option value="2-5">2-5</option>
+                <option value="6-10">6-10</option>
+                <option value="11-20">11-20</option>
+                <option value="21+">21+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+            Business Description
+          </label>
+          <textarea 
+            name="description" 
+            value={profileData.description} 
+            onChange={handleInputChange} 
+            rows={4}
+            className={`w-full p-2 rounded-md ${
+              isDark 
+                ? 'bg-[#182052] border-[#303974] text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+        </div>
+        
+        <div>
+          <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+            Skills (comma separated)
+          </label>
+          <input 
+            type="text" 
+            value={profileData.skills.join(', ')} 
+            onChange={handleSkillsChange} 
+            placeholder="e.g. Web Design, Marketing, Project Management"
+            className={`w-full p-2 rounded-md ${
+              isDark 
+                ? 'bg-[#182052] border-[#303974] text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+          <p className={`text-xs mt-1 ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+            Add skills that best describe your business expertise
+          </p>
+        </div>
+        
+        <div>
+          <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
+            Certifications (comma separated)
+          </label>
+          <input 
+            type="text" 
+            value={profileData.certifications.join(', ')} 
+            onChange={handleCertificationsChange} 
+            placeholder="e.g. WBE Certified, ISO 9001, PMP"
+            className={`w-full p-2 rounded-md ${
+              isDark 
+                ? 'bg-[#182052] border-[#303974] text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+          <p className={`text-xs mt-1 ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+            Add any business certifications or qualifications you hold
+          </p>
+        </div>
+        
+        <div className="flex justify-between pt-4">
+          <CustomButton 
+            variant="outline" 
+            onClick={handleCancelEdit}
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton onClick={handleSaveProfile}>
+            Save Changes
+          </CustomButton>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+            Business Profile
+          </h1>
+          <p className={`${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+            Manage your business information and showcase your expertise
+          </p>
+        </div>
+        
+        <div className="mt-4 md:mt-0">
+          <CustomButton onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
+          </CustomButton>
+        </div>
+      </div>
+      
+      {/* Profile Header */}
+      <div className={`p-6 rounded-lg mb-6 ${
+        isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center">
+          <div className="flex-shrink-0 mb-4 md:mb-0 md:mr-6">
+            <div className={`w-24 h-24 rounded-lg flex items-center justify-center ${
+              isDark ? 'bg-[#182052] text-white' : 'bg-gray-100 text-gray-700'
+            }`}>
+              {profileData.businessName ? (
+                <span className="text-3xl font-bold">
+                  {profileData.businessName.charAt(0)}
+                </span>
+              ) : (
+                <Building2 className="h-12 w-12" />
+              )}
+            </div>
+          </div>
+          
+          <div className="flex-grow">
+            <div className="flex flex-col md:flex-row md:items-center justify-between">
+              <div>
+                <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {profileData.businessName || 'Your Business Name'}
+                </h2>
+                <p className={`text-sm mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                  {profileData.businessType || 'Business Type'} • {profileData.location || 'Location'}
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mt-3 md:mt-0">
+                {verifications.womanOwned && (
+                  <Badge className={isDark ? 'bg-purple-400/20 text-purple-300' : 'bg-purple-100 text-purple-700'}>
+                    <CheckCircle className="h-3 w-3 mr-1" /> Woman-Owned
+                  </Badge>
+                )}
+                
+                {verifications.identityVerified && (
+                  <Badge className={isDark ? 'bg-blue-400/20 text-blue-300' : 'bg-blue-100 text-blue-700'}>
+                    <CheckCircle className="h-3 w-3 mr-1" /> Verified Identity
+                  </Badge>
+                )}
+                
+                {verifications.businessRegistered && (
+                  <Badge className={isDark ? 'bg-green-400/20 text-green-300' : 'bg-green-100 text-green-700'}>
+                    <CheckCircle className="h-3 w-3 mr-1" /> Registered Business
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              {profileData.email && (
+                <div className="flex items-center">
+                  <Mail className={`h-4 w-4 mr-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+                  <span className={`text-sm truncate ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                    {profileData.email}
+                  </span>
+                </div>
+              )}
+              
+              {profileData.phone && (
+                <div className="flex items-center">
+                  <Phone className={`h-4 w-4 mr-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+                  <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                    {profileData.phone}
+                  </span>
+                </div>
+              )}
+              
+              {profileData.website && (
+                <div className="flex items-center">
+                  <Globe className={`h-4 w-4 mr-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+                  <span className={`text-sm truncate ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                    {profileData.website}
+                  </span>
+                </div>
+              )}
+              
+              {profileData.foundedYear && (
+                <div className="flex items-center">
+                  <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`} />
+                  <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                    Est. {profileData.foundedYear}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((stat, index) => (
+          <div 
+            key={index}
+            className={`p-4 rounded-lg ${
+              isDark 
+                ? 'bg-[#0A155A]/70 border border-[#303974]' 
+                : 'bg-white border border-gray-200'
             }`}
           >
-            <Building2 className="h-4 w-4 mr-2" />
-            Business Profile
+            <div className="flex items-center mb-2">
+              {stat.icon}
+              <span className={`ml-2 text-sm font-medium ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                {stat.title}
+              </span>
+            </div>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {stat.value}
+            </div>
+            <p className={`text-xs mt-1 ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
+              {stat.description}
+            </p>
+          </div>
+        ))}
+      </div>
+      
+      {/* Tabs for profile sections */}
+      <Tabs defaultValue="details" className="mb-6">
+        <TabsList className={`mb-6 ${
+          isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-gray-100 border border-gray-200'
+        }`}>
+          <TabsTrigger 
+            value="details" 
+            className={isDark 
+              ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]' 
+              : 'data-[state=active]:bg-white data-[state=active]:text-primary text-gray-500'
+            }
+          >
+            <User className="h-4 w-4 mr-2" />
+            Business Details
           </TabsTrigger>
           <TabsTrigger 
             value="portfolio" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
+            className={isDark 
+              ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]' 
+              : 'data-[state=active]:bg-white data-[state=active]:text-primary text-gray-500'
+            }
           >
             <Briefcase className="h-4 w-4 mr-2" />
             Portfolio
           </TabsTrigger>
           <TabsTrigger 
-            value="connections" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Partners
-          </TabsTrigger>
-          <TabsTrigger 
             value="reputation" 
-            className={`${
-              isDark
-                ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]'
-                : 'data-[state=active]:bg-white data-[state=active]:text-purple-700 text-gray-600 data-[state=active]:shadow-sm'
-            }`}
+            className={isDark 
+              ? 'data-[state=active]:bg-[#4A5BC2] data-[state=active]:text-white text-[#B2B9E1]' 
+              : 'data-[state=active]:bg-white data-[state=active]:text-primary text-gray-500'
+            }
           >
             <Star className="h-4 w-4 mr-2" />
-            Business Reputation
+            Reputation
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="profile">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <CardTitle>Business Information</CardTitle>
-              <CardDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                Fill in your business details to help us match you with the right opportunities.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="businessName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Business Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter your business name" 
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            Your official registered business name
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="ownerName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Owner/Founder Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter your name" 
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            Your name as the business owner
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Business Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="yourname@business.com" 
-                              type="email"
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            Your business contact email
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Business Phone</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="(123) 456-7890" 
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            Your business contact phone number
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="industry"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Primary Industry</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}>
-                                <SelectValue placeholder="Select your primary industry" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {INDUSTRIES.map((industry) => (
-                                <SelectItem key={industry} value={industry}>
-                                  {industry}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            The main industry your business operates in
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Website (Optional)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="https://yourbusiness.com" 
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            Your business website URL
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="yearFounded"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Year Founded</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="2020" 
-                              {...field} 
-                              className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                            />
-                          </FormControl>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            The year your business was established
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="teamSize"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={isDark ? 'text-white' : ''}>Team Size</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}>
-                                <SelectValue placeholder="Select team size" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="1">Just me</SelectItem>
-                              <SelectItem value="2-5">2-5 employees</SelectItem>
-                              <SelectItem value="6-10">6-10 employees</SelectItem>
-                              <SelectItem value="11-20">11-20 employees</SelectItem>
-                              <SelectItem value="21+">21+ employees</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                            How many people work at your business
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className={isDark ? 'text-white' : ''}>Business Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Tell us about your business, your mission, and what makes you special..." 
-                            {...field} 
-                            className={`min-h-[120px] ${isDark ? 'bg-[#181F6A] border-[#303974]' : ''}`}
-                          />
-                        </FormControl>
-                        <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                          A brief description of your business, what you do, and what makes you unique
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="certifications"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className={isDark ? 'text-white' : ''}>Certifications (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="List any business certifications you have (e.g., WBE, WOSB, etc.)" 
-                            {...field} 
-                            className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}
-                          />
-                        </FormControl>
-                        <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                          Any official certifications or accreditations your business has received
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div>
-                    <Label className={isDark ? 'text-white' : ''}>Business Skills</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <Select onValueChange={handleSkillAdd}>
-                          <SelectTrigger className={isDark ? 'bg-[#181F6A] border-[#303974]' : ''}>
-                            <SelectValue placeholder="Add skills" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SKILLS.filter(skill => !selectedSkills.includes(skill)).map((skill) => (
-                              <SelectItem key={skill} value={skill}>
-                                {skill}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className={isDark ? 'text-[#8891C5]' : ''}>
-                          Add skills that represent your business capabilities
-                        </FormDescription>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {selectedSkills.map((skill) => (
-                          <Badge 
-                            key={skill} 
-                            variant="outline" 
-                            className={`${
-                              isDark 
-                                ? 'bg-[#4A5BC2]/20 hover:bg-[#4A5BC2]/30 border-[#4A5BC2]' 
-                                : 'bg-primary/10 hover:bg-primary/20 border-primary/30'
-                            }`}
-                          >
-                            {skill}
-                            <button
-                              type="button"
-                              onClick={() => handleSkillRemove(skill)}
-                              className="ml-1 hover:text-red-500"
-                            >
-                              ×
-                            </button>
-                          </Badge>
-                        ))}
-                        {selectedSkills.length === 0 && (
-                          <span className={`text-sm ${isDark ? 'text-[#8891C5]' : 'text-gray-500'}`}>
-                            No skills added yet
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <CustomButton type="submit">
-                      Save Profile
-                    </CustomButton>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+        
+        <TabsContent value="details">
+          {isEditing ? <EditProfileForm /> : <BusinessDetails />}
         </TabsContent>
-
+        
         <TabsContent value="portfolio">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Your Portfolio</CardTitle>
-                  <CardDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                    Showcase your past projects and work experience
-                  </CardDescription>
-                </div>
-                <CustomButton size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Project
-                </CustomButton>
+          <div className={`p-6 rounded-lg ${
+            isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+          }`}>
+            <div className="flex justify-between items-start mb-6">
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Portfolio & Work History
+              </h2>
+              <CustomButton variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Add Project
+              </CustomButton>
+            </div>
+            
+            <div className="text-center py-10">
+              <div className={`mb-4 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                <Briefcase className="h-12 w-12 mx-auto opacity-50" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {portfolioProjects.map((project) => (
-                  <div 
-                    key={project.id} 
-                    className={`p-4 rounded-lg border ${
-                      isDark 
-                        ? 'border-[#303974] bg-[#181F6A]' 
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-medium">{project.title}</h3>
-                      <div className="flex space-x-2">
-                        <button className={`p-1 rounded-full ${isDark ? 'hover:bg-[#303974]' : 'hover:bg-gray-100'}`}>
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button className={`p-1 rounded-full ${isDark ? 'hover:bg-[#303974]' : 'hover:bg-gray-100'}`}>
-                          <Trash2 className="h-4 w-4 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                    <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'} mb-1`}>
-                      Client: {project.client} • {project.year}
-                    </p>
-                    <p className="text-sm mb-3">{project.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.skills.map((skill) => (
-                        <Badge 
-                          key={skill} 
-                          variant="outline" 
-                          className={`${
-                            isDark 
-                              ? 'bg-[#4A5BC2]/20 border-[#4A5BC2]' 
-                              : 'bg-primary/10 border-primary/30'
-                          }`}
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                
-                <div 
-                  className={`p-4 rounded-lg border border-dashed flex flex-col items-center justify-center text-center ${
-                    isDark 
-                      ? 'border-[#303974] hover:border-[#4A5BC2] bg-[#181F6A]/50' 
-                      : 'border-gray-200 hover:border-gray-300 bg-gray-50'
-                  }`}
-                >
-                  <UploadCloud className={`h-8 w-8 mb-2 ${isDark ? 'text-[#4A5BC2]' : 'text-primary'}`} />
-                  <h3 className="text-lg font-medium mb-1">Add Another Project</h3>
-                  <p className={`text-sm mb-3 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                    Showcase more of your work to increase your chances of winning contracts
-                  </p>
-                  <CustomButton size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Project
-                  </CustomButton>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                No portfolio items yet
+              </h3>
+              <p className={`mb-4 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                Showcase your past work to build credibility with clients and partners
+              </p>
+              <CustomButton>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Your First Project
+              </CustomButton>
+            </div>
+          </div>
         </TabsContent>
-
-        <TabsContent value="connections">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Your Business Partners</CardTitle>
-                  <CardDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                    Connect with other women-owned businesses to team up for contracts
-                  </CardDescription>
-                </div>
-                <CustomButton size="sm">
-                  <Users className="h-4 w-4 mr-2" />
-                  Find Partners
-                </CustomButton>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {connections.map((connection) => (
-                  <div 
-                    key={connection.id} 
-                    className={`p-4 rounded-lg border flex items-center ${
-                      isDark 
-                        ? 'border-[#303974] bg-[#181F6A]' 
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-[#4A5BC2]/20 text-[#B2B9E1]' 
-                        : 'bg-primary/10 text-primary'
-                    }`}>
-                      <User className="h-6 w-6" />
-                    </div>
-                    
-                    <div className="ml-4 flex-grow">
-                      <h3 className="text-base font-medium">{connection.name}</h3>
-                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        {connection.business} • {connection.industry}
-                      </p>
-                    </div>
-                    
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center">
-                        <Star className={`h-4 w-4 ${
-                          connection.matchScore > 90 
-                            ? 'text-yellow-400' 
-                            : connection.matchScore > 80 
-                              ? 'text-green-400' 
-                              : 'text-blue-400'
-                        }`} />
-                        <span className="ml-1 font-medium">{connection.matchScore}%</span>
-                      </div>
-                      <span className="text-xs mt-1">match</span>
-                    </div>
-                  </div>
-                ))}
-                
-                <div 
-                  className={`p-4 rounded-lg border border-dashed flex flex-col items-center justify-center text-center ${
-                    isDark 
-                      ? 'border-[#303974] hover:border-[#4A5BC2] bg-[#181F6A]/50' 
-                      : 'border-gray-200 hover:border-gray-300 bg-gray-50'
-                  }`}
-                >
-                  <Users className={`h-8 w-8 mb-2 ${isDark ? 'text-[#4A5BC2]' : 'text-primary'}`} />
-                  <h3 className="text-lg font-medium mb-1">Find More Partners</h3>
-                  <p className={`text-sm mb-3 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                    Connect with other women entrepreneurs to team up for larger contracts
-                  </p>
-                  <CustomButton size="sm" variant="outline">
-                    Explore Partner Network
-                  </CustomButton>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
+        
         <TabsContent value="reputation">
-          <Card className={isDark ? 'bg-[#0A155A]/70 border-[#303974] text-white' : ''}>
-            <CardHeader>
-              <CardTitle>Business Reputation</CardTitle>
-              <CardDescription className={isDark ? 'text-[#B2B9E1]' : ''}>
-                Track your business reputation and growth on HerBid
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-medium">Overall Score</h3>
-                    <Star className={`h-5 w-5 ${isDark ? 'text-yellow-300' : 'text-yellow-500'}`} />
+          <div className={`p-6 rounded-lg ${
+            isDark ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
+          }`}>
+            <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Business Reputation
+            </h2>
+            
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Overall Score
+                </span>
+                <span className={`font-bold text-lg ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+                  92%
+                </span>
+              </div>
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full" 
+                  style={{ width: '92%' }}
+                ></div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className={`text-lg font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Performance Metrics
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                        On-time Delivery
+                      </span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        98%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '98%' }}></div>
+                    </div>
                   </div>
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold">85</span>
-                    <span className="text-sm ml-1">/ 100</span>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                        Quality of Work
+                      </span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        95%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full" style={{ width: '95%' }}></div>
+                    </div>
                   </div>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                    Based on project completion, client feedback, and collaboration metrics
-                  </p>
-                </div>
-                
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-medium">Contracts Won</h3>
-                    <Award className={`h-5 w-5 ${isDark ? 'text-purple-300' : 'text-purple-500'}`} />
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                        Communication
+                      </span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        90%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-pink-500 rounded-full" style={{ width: '90%' }}></div>
+                    </div>
                   </div>
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold">8</span>
-                    <span className={`text-sm ml-3 ${
-                      isDark ? 'text-green-300' : 'text-green-500'
-                    }`}>+2 this quarter</span>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                        Budget Adherence
+                      </span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        88%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 rounded-full" style={{ width: '88%' }}></div>
+                    </div>
                   </div>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                    Contracts successfully completed through HerBid
-                  </p>
-                </div>
-                
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-[#181F6A]' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-medium">Visibility</h3>
-                    <BarChart3 className={`h-5 w-5 ${isDark ? 'text-pink-300' : 'text-pink-500'}`} />
-                  </div>
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold">65%</span>
-                    <span className={`text-sm ml-3 ${
-                      isDark ? 'text-green-300' : 'text-green-500'
-                    }`}>+25% growth</span>
-                  </div>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                    Your business visibility across opportunities
-                  </p>
                 </div>
               </div>
               
-              <div className={`p-6 rounded-lg mb-6 ${
-                isDark ? 'bg-[#181F6A]' : 'bg-gray-50'
-              }`}>
-                <h3 className="text-lg font-medium mb-4">Reputation Growth</h3>
-                <div className="h-40 flex items-end justify-between">
-                  {[40, 55, 45, 65, 60, 75, 85].map((height, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div 
-                        className={`w-8 ${
-                          isDark 
-                            ? 'bg-gradient-to-t from-purple-500/50 to-pink-500/50' 
-                            : 'bg-gradient-to-t from-purple-100 to-pink-200'
-                        } rounded-t-sm`} 
-                        style={{ height: `${height}%` }}
-                      ></div>
-                      <div className={`text-xs mt-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][i]}
+              <div>
+                <h3 className={`text-lg font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Contract Success
+                </h3>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-md ${isDark ? 'bg-[#182052]' : 'bg-gray-50'}`}>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          Completed Contracts
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                          Successfully delivered
+                        </div>
+                      </div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        12
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className={`p-6 rounded-lg ${
-                isDark ? 'bg-[#181F6A]' : 'bg-gray-50'
-              }`}>
-                <h3 className="text-lg font-medium mb-4">Achievements</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-purple-500/20 text-purple-300' 
-                        : 'bg-purple-100 text-purple-600'
-                    }`}>
-                      <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                    <div className="ml-3">
-                      <h4 className="font-medium">Verified Business</h4>
-                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Your business has been verified as women-owned
-                      </p>
+                  </div>
+                  
+                  <div className={`p-4 rounded-md ${isDark ? 'bg-[#182052]' : 'bg-gray-50'}`}>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          Contract Value
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                          Total contracts completed
+                        </div>
+                      </div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        $432K
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-start">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-green-500/20 text-green-300' 
-                        : 'bg-green-100 text-green-600'
-                    }`}>
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div className="ml-3">
-                      <h4 className="font-medium">Team Player</h4>
-                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Successfully completed 3 contracts with other businesses
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-blue-500/20 text-blue-300' 
-                        : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      <Award className="h-5 w-5" />
-                    </div>
-                    <div className="ml-3">
-                      <h4 className="font-medium">Rising Star</h4>
-                      <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
-                        Among the top 10% of new businesses on the platform
-                      </p>
+                  <div className={`p-4 rounded-md ${isDark ? 'bg-[#182052]' : 'bg-gray-50'}`}>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          Repeat Clients
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>
+                          Client retention rate
+                        </div>
+                      </div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        83%
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 };
 
-export default ProfilePage;
+export default Profile;
