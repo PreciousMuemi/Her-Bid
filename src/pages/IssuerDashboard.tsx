@@ -721,7 +721,7 @@ const Button = ({
   ...props 
 }: {
   children: React.ReactNode;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
   className?: string;
   onClick?: () => void;
 }) => {

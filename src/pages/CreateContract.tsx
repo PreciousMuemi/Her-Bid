@@ -45,6 +45,15 @@ const CreateContract = () => {
       [name]: value
     });
   };
+
+  // Handle select element change - this is the fix for the type error
+  const handleSelectElementChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
   
   // Add a skill tag
   const handleAddSkill = () => {
@@ -200,7 +209,7 @@ const CreateContract = () => {
                   id="location"
                   name="location"
                   value={formData.location}
-                  onChange={(e) => handleInputChange(e)}
+                  onChange={handleSelectElementChange}
                   className={`w-full px-3 py-2 rounded-md border ${
                     theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : 'border-gray-200'
                   }`}
