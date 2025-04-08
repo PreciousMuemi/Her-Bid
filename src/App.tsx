@@ -24,6 +24,8 @@ import CollectiveEngine from './pages/CollectiveEngine';
 import SecurePayments from './pages/SecurePayments';
 import SkillVerification from './pages/SkillVerification';
 import Opportunities from './pages/Opportunities';
+import IssuerDashboard from './pages/IssuerDashboard';
+import CreateContract from './pages/CreateContract';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -56,6 +58,8 @@ const App = () => {
               {/* Routes that need layout */}
               <Route path="/" element={<AppLayout />}>
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="issuer-dashboard" element={<IssuerDashboard />} />
+                <Route path="create-contract" element={<CreateContract />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="quick-profile" element={<QuickProfileGuide />} />
                 <Route path="hedera" element={<HederaPage />} />

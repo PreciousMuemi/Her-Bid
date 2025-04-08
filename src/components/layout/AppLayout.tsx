@@ -28,7 +28,7 @@ const AppLayout = () => {
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <div className="flex-1">
+      <div className="flex-1 pl-16 md:pl-64">
         <AppHeader />
         <main className="p-4 md:p-6">
           <Outlet />
