@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { toast } from "sonner";
-import { MessageSquareText, Send, HelpCircle, AlertTriangle, ThumbsUp } from "lucide-react";
+import { MessageSquareText, Send, HelpCircle, AlertTriangle, ThumbsUp, Check } from "lucide-react";
 
 // Define feedback categories
 const feedbackCategories = [
