@@ -58,7 +58,7 @@ const App = () => {
               {/* Routes that need layout */}
               <Route path="/" element={<AppLayout />}>
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="issuer-dashboard" element={<IssuerDashboard />} />
+               {/* <Route path="issuer-dashboard" element={<IssuerDashboard />} /> */}
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="quick-profile" element={<QuickProfileGuide />} />

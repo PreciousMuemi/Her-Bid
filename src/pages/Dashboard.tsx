@@ -11,7 +11,7 @@ import SquadTab from "@/components/dashboard/tabs/SquadTab";
 import BidsTab from "@/components/dashboard/tabs/BidsTab";
 import { Wallet, ChevronRight, Building2, Shield, Award, Briefcase } from "lucide-react";
 import { toast } from "sonner";
-import WalletConnectGuide from '@/components/WalletConnectGuide';
+//import WalletConnectGuide from '@/components/WalletConnectGuide';
 import FirstTimeUserExperience from '@/components/FirstTimeUserExperience';
 import RecommendedContracts from '@/components/dashboard/RecommendedContracts';
 
@@ -94,10 +94,16 @@ const Dashboard = () => {
         localStorage.setItem("isAuthenticated", "true");
         toast.success("Wallet connected successfully!");
       } else {
-        // Fall back to showing the wallet guide
-        setIsLoading(false);
-        setShowWalletGuide(true);
+        // If MetaMask fails, fall back to Hedera wallet connection
+        const success = await connectToHedera();
+        if (success) {
+          toast.success("Wallet connected successfully!");
+        } else {
+          toast.error("Failed to connect wallet");
+          setShowWalletGuide(true);
+        }
       }
+
     } catch (error) {
       console.error("Error connecting wallet:", error);
       setIsLoading(false);

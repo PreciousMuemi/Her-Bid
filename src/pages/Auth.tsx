@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,11 @@ import { useHedera } from "@/hooks/useHedera";
 import { useThemeStore } from "@/store/themeStore";
 import { toast } from "sonner";
 import { Wallet, Shield, UserRoundPlus, Loader2, Building, Briefcase } from "lucide-react";
+import { VerificationFlow } from "@/components/VerificationFlow";
+
+// Rest of the Auth.tsx file content remains exactly the same...
+// [Include all the existing code from Auth.tsx here]
+
 
 enum AuthMode {
   LOGIN = "login",

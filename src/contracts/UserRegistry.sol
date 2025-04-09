@@ -1,56 +1,70 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract UserRegistry {
-    struct UserProfile {
-        string businessName;
-        string email;
-        string industry;
-        string skills;
-        uint256 createdAt;
+    struct Contract {
+        string title;
+        string description;
+        uint256 budget;
+        uint256 deadline;
+        string[] skillsRequired;
+        address issuer;
+        bool isActive;
     }
-    
-    mapping(address => UserProfile) public users;
-    mapping(address => bool) public registeredUsers;
-    
-    event UserRegistered(address userAddress, string businessName);
-    
-    function registerUser(
-        string memory businessName,
-        string memory email,
-        string memory industry,
-        string memory skills
-    ) external {
-        require(!registeredUsers[msg.sender], "Already registered");
-        
-        users[msg.sender] = UserProfile(
-            businessName,
-            email,
-            industry,
-            skills,
-            block.timestamp
-        );
-        
-        registeredUsers[msg.sender] = true;
-        
-        emit UserRegistered(msg.sender, businessName);
+
+    Contract[] public contracts;
+
+    constructor() {}
+
+    function createContract(
+        string memory _title,
+        string memory _description,
+        uint256 _budget,
+        uint256 _deadline,
+        string[] memory _skillsRequired
+    ) public {
+        contracts.push(Contract({
+            title: _title,
+            description: _description,
+            budget: _budget,
+            deadline: _deadline,
+            skillsRequired: _skillsRequired,
+            issuer: msg.sender,
+            isActive: true
+        }));
     }
-    
-    function verifyUser(address userAddress) external view returns (bool) {
-        return registeredUsers[userAddress];
-    }
-    
-    function getUserProfile(address userAddress) external view 
-        returns (string memory, string memory, string memory, string memory) {
-        require(registeredUsers[userAddress], "User not registered");
+
+    function acceptBid(uint256 contractIndex, uint256 bidIndex) public {
+        require(contractIndex < contracts.length, "Invalid contract index");
+        require(msg.sender == contracts[contractIndex].issuer, "Only issuer can accept bids");
+        require(bidIndex < contracts[contractIndex].bids.length, "Invalid bid index");
         
-        UserProfile memory profile = users[userAddress];
+        contracts[contractIndex].acceptedBid = bidIndex;
+        contracts[contractIndex].status = "active";
+    }
+
+    function getContractCount() public view returns (uint256) {
+        return contracts.length;
+    }
+
+    function getContractDetails(uint256 index) public view returns (
+        string memory,
+        string memory,
+        uint256,
+        uint256,
+        string[] memory,
+        address,
+        bool
+    ) {
+        Contract memory c = contracts[index];
         return (
-            profile.businessName,
-            profile.email,
-            profile.industry,
-            profile.skills
+            c.title,
+            c.description,
+            c.budget,
+            c.deadline,
+            c.skillsRequired,
+            c.issuer,
+            c.isActive
         );
     }
 }
