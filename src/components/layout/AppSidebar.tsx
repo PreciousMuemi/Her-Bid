@@ -1,143 +1,122 @@
 
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
-import { 
-  LayoutDashboard, Users, Search, ShieldCheck, Award, 
-  ChevronLeft, ChevronRight, BriefcaseBusiness, DollarSign,
-  Sparkles, File, User2
-} from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { CustomButton } from '@/components/ui/CustomButton';
-import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, Home, Globe, Briefcase, UserRoundCog, Users, Coins, ShieldCheck, MessageSquareText } from 'lucide-react';
 
-const AppSidebar = () => {
-  const { theme } = useThemeStore();
-  const navigate = useNavigate();
+const AppSidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> = ({
+  isSidebarOpen,
+  toggleSidebar,
+}) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { theme } = useThemeStore();
   const isDark = theme === 'dark';
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-  
-  const menuItems = [
-    { 
-      icon: <LayoutDashboard className="h-5 w-5" />, 
-      label: 'Dashboard', 
+
+  // Navigation items
+  const navItems = [
+    {
+      label: 'Dashboard',
+      icon: <Home size={20} />,
       path: '/dashboard',
-      active: location.pathname === '/dashboard' 
     },
-    { 
-      icon: <Search className="h-5 w-5" />, 
-      label: 'Find Opportunities', 
+    {
+      label: 'Opportunities',
+      icon: <Globe size={20} />,
       path: '/opportunities',
-      active: location.pathname === '/opportunities'
     },
-    { 
-      icon: <Users className="h-5 w-5" />, 
-      label: 'Collective Engine', 
+    {
+      label: 'Collective Engine',
+      icon: <Users size={20} />,
       path: '/collective-engine',
-      active: location.pathname === '/collective-engine' || location.pathname === '/create-consortium'
     },
-    { 
-      icon: <ShieldCheck className="h-5 w-5" />, 
-      label: 'Secure Payments', 
+    {
+      label: 'Secure Payments',
+      icon: <ShieldCheck size={20} />,
       path: '/secure-payments',
-      active: location.pathname === '/secure-payments' || location.pathname === '/manage-escrow'
     },
-    { 
-      icon: <Award className="h-5 w-5" />, 
-      label: 'Skill Verification', 
-      path: '/skill-verification',
-      active: location.pathname === '/skill-verification' || location.pathname === '/token-management'
+    {
+      label: 'Token Management',
+      icon: <Coins size={20} />,
+      path: '/token-management',
     },
-    { 
-      icon: <BriefcaseBusiness className="h-5 w-5" />, 
-      label: 'Your Contracts', 
-      path: '/contracts/1',
-      active: location.pathname.startsWith('/contracts')
+    {
+      label: 'Profile',
+      icon: <UserRoundCog size={20} />,
+      path: '/profile',
+    },
+    {
+      label: 'Issuer Dashboard',
+      icon: <Briefcase size={20} />,
+      path: '/issuer-dashboard',
+    },
+    {
+      label: 'Send Feedback',
+      icon: <MessageSquareText size={20} />,
+      path: '/feedback',
     },
   ];
-  
+
+  // Check if the path is active
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <div 
-      className={`fixed inset-y-0 left-0 z-20 flex flex-col transition-all duration-300 ${
+    <aside
+      className={`h-screen fixed top-16 bottom-0 left-0 z-40 transition-all duration-300 ${
         isSidebarOpen ? 'w-64' : 'w-16'
-      } ${isDark ? 'bg-[#0A155A] border-r border-[#303974]' : 'bg-white border-r border-gray-200'}`}
+      } ${
+        isDark
+          ? 'bg-[#0A155A] border-r border-[#303974]'
+          : 'bg-white border-r border-gray-200'
+      }`}
     >
-      <div className={`h-16 flex items-center justify-between px-4 border-b ${
-        isDark ? 'border-[#303974]' : 'border-gray-200'
-      }`}>
-        {isSidebarOpen ? (
-          <div className={`font-bold text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <span>Her</span>
-            <span className={isDark ? 'text-primary' : 'text-primary'}>Bid</span>
-          </div>
-        ) : (
-          <div className={`font-bold text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            HB
-          </div>
-        )}
-        <button 
-          onClick={toggleSidebar}
-          className={`p-1 rounded-md ${
-            isDark ? 'text-[#B2B9E1] hover:text-white' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {isSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-        </button>
-      </div>
-      
-      <ScrollArea className="flex-grow py-4">
-        <div className="px-3 py-2 space-y-2">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center'} py-3 rounded-md transition-colors ${
-                item.active 
-                  ? isDark 
-                    ? 'bg-[#4A5BC2] text-white' 
-                    : 'bg-primary/10 text-primary'
-                  : isDark 
-                    ? 'text-[#B2B9E1] hover:bg-[#182052] hover:text-white' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <span className="flex-shrink-0">
-                {item.icon}
-              </span>
-              {isSidebarOpen && (
-                <span className={cn("ml-3 truncate text-sm", 
-                  item.active ? 'font-medium' : 'font-normal'
-                )}>{item.label}</span>
-              )}
-            </button>
-          ))}
+      <div className="flex flex-col h-full">
+        <div className="flex-1 px-3 py-4">
+          <ul className="space-y-2">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center p-2 rounded-lg ${
+                      isSidebarOpen ? 'justify-start' : 'justify-center'
+                    } ${
+                      isActive
+                        ? isDark
+                          ? 'bg-[#182052] text-purple-300'
+                          : 'bg-gray-100 text-purple-700'
+                        : isDark
+                        ? 'text-gray-200 hover:bg-[#182052]'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`
+                  }
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {isSidebarOpen && (
+                    <span className="ml-3 whitespace-nowrap overflow-hidden">{item.label}</span>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
         </div>
-      </ScrollArea>
-      
-      <div className={`px-3 py-4 ${isDark ? 'border-t border-[#303974]' : 'border-t border-gray-200'}`}>
-        <CustomButton
-          className={`w-full ${!isSidebarOpen && 'px-0 justify-center'} ${
-            isDark 
-              ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 border-0 text-white' 
-              : ''
-          }`}
-          onClick={() => navigate('/profile')}
-        >
-          {isSidebarOpen ? (
-            <>
-              <User2 className="h-5 w-5 mr-2" /> My Profile
-            </>
-          ) : (
-            <User2 className="h-5 w-5" />
-          )}
-        </CustomButton>
+        <div className="p-4">
+          <button
+            onClick={toggleSidebar}
+            className={`flex items-center justify-center w-full p-2 rounded-lg transition-colors ${
+              isDark
+                ? 'bg-[#182052] text-gray-200 hover:bg-[#2b3a7c]'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            {isSidebarOpen && <span className="ml-2">Collapse</span>}
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

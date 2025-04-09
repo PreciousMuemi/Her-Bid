@@ -26,6 +26,7 @@ import SkillVerification from './pages/SkillVerification';
 import Opportunities from './pages/Opportunities';
 import IssuerDashboard from './pages/IssuerDashboard';
 import CreateContract from './pages/CreateContract';
+import Feedback from './components/Feedback';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -72,6 +73,7 @@ const App = () => {
                 <Route path="opportunities" element={<Opportunities />} />
                 <Route path="token-management" element={<TokenManagement />} />
                 <Route path="contracts/:id" element={<ContractDetails />} />
+                <Route path="feedback" element={<Feedback />} />
               </Route>
 
               {/* Catch-all route */}
