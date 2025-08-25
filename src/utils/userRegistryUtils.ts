@@ -2,54 +2,12 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { executeMoveFunction, callMoveFunction, validateSuiAddress } from './suiUtils';
 
 // Get package and module info from environment variables
 const USER_REGISTRY_PACKAGE = import.meta.env.VITE_USER_REGISTRY_PACKAGE || "";
 const USER_REGISTRY_MODULE = "user_registry";
-
-// Check if a user exists using Ethereum provider
-export const checkUserExistsEth = async (provider: ethers.providers.Web3Provider, address: string): Promise<boolean> => {
-  try {
-    const contract = new ethers.Contract(USER_REGISTRY_CONTRACT, userRegistryAbi, provider);
-    return await contract.verifyUser(address);
-  } catch (error) {
-    console.error("Error checking user existence (ETH):", error);
-    toast.error("Failed to verify user account");
-    throw error;
-  }
-};
-
-// Register user using Ethereum provider
-export const registerUserEth = async (
-  provider: ethers.providers.Web3Provider,
-  formData: { businessName: string; email: string; industry: string; skills: string }
-): Promise<boolean> => {
-  try {
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(USER_REGISTRY_CONTRACT, userRegistryAbi, signer);
-    
-    const tx = await contract.registerUser(
-      formData.businessName,
-      formData.email,
-      formData.industry,
-      formData.skills
-    );
-    
-    await tx.wait();
-    return true;
-  } catch (error) {
-    console.error("Error registering user (ETH):", error);
-    toast.error("Failed to register user");
-    throw error;
-  }
-};
-
-// Check if a user exists using Hedera client
-export const checkUserExistsHedera = async (client: Client, accountId: string): Promise<boolean> => {
-  try {
-    const contractId = ContractId.fromString(USER_REGISTRY_CONTRACT.replace('0x', ''));
 // Check if a user exists using Sui client
 export const checkUserExistsSui = async (client: SuiClient, address: string): Promise<boolean> => {
   try {

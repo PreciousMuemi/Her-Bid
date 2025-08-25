@@ -9,7 +9,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { Loader2, Check, Wallet, Shield, RefreshCw } from "lucide-react";
 import { useSui } from "@/hooks/useSui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 const SuiPage = () => {
   const navigate = useNavigate();
@@ -51,16 +51,13 @@ const SuiPage = () => {
       
       // Generate new wallet
       const { Ed25519Keypair } = await import('@mysten/sui.js/keypairs/ed25519');
-      const { generateMnemonic, mnemonicToSeedHex } = await import('@mysten/bip39');
       
-      const mnemonic = generateMnemonic();
-      const seedHex = mnemonicToSeedHex(mnemonic);
-      const keypair = Ed25519Keypair.fromSeed(Uint8Array.from(Buffer.from(seedHex.slice(0, 64), 'hex')));
+      const keypair = new Ed25519Keypair();
       const newAddress = keypair.toSuiAddress();
       
       setNewWalletInfo({
         address: newAddress,
-        mnemonic: mnemonic
+        mnemonic: "Wallet created successfully - use browser extension for full functionality"
       });
       
       toast.success("New Sui wallet created!");

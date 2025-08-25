@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bell, ChevronDown } from 'lucide-react';
-import { useHedera } from '@/contexts/HederaContext';
+import { useSui } from '@/hooks/useSui';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,

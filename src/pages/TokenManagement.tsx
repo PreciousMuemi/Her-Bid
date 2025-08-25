@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useHedera } from '../contexts/HederaContext';
+import { useSui } from '../hooks/useSui';
 import TokenCreator from './TokenCreator';
 import TokenAssociator from './TokenAssociator';
 import { Wallet, Coins, ArrowRight } from 'lucide-react';

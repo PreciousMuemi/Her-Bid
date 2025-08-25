@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHedera } from '../hooks/useHedera';
+import { useSui } from '../hooks/useSui';
 
 const Auth: React.FC = () => {
   const { connectMetaMask, ethAddress, isConnected } = useHedera();

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useHedera } from '../hooks/useHedera';
+import { useSui } from '../hooks/useSui';
 import ContractDeployer from '../components/ContractDeployer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

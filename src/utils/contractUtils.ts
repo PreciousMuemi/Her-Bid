@@ -1,55 +1,39 @@
 
-import { ethers } from "ethers";
+import { SuiClient } from '@mysten/sui.js/client';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toast } from "sonner";
+import { executeMoveFunction, callMoveFunction } from './suiUtils';
 
-// ABI for SimpleStorage contract
-const simpleStorageAbi = [
-  {
-    "inputs": [],
-    "name": "get",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "uint256", "name": "x", "type": "uint256"}],
-    "name": "set",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "address", "name": "sender", "type": "address"},
-      {"indexed": false, "internalType": "uint256", "name": "data", "type": "uint256"}
-    ],
-    "name": "DataStored",
-    "type": "event"
-  }
-];
+// Get contract package and module info from environment variables
+const SIMPLE_STORAGE_PACKAGE = import.meta.env.VITE_SIMPLE_STORAGE_PACKAGE || "";
+const SIMPLE_STORAGE_MODULE = "simple_storage";
 
-// Get contract address from environment variable or use fallback
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
+// Simple storage contract functions for Sui
 
-export const getSimpleStorageContract = (provider: ethers.providers.Web3Provider) => {
+export const getStoredValue = async (client: SuiClient, objectId: string): Promise<number | null> => {
   try {
-    const signer = provider.getSigner();
-    return new ethers.Contract(CONTRACT_ADDRESS, simpleStorageAbi, signer);
-  } catch (error) {
-    console.error("Error creating contract instance:", error);
-    toast.error("Failed to connect to contract");
-    return null;
-  }
-};
-
-export const getStoredValue = async (provider: ethers.providers.Web3Provider): Promise<number | null> => {
-  try {
-    const contract = getSimpleStorageContract(provider);
-    if (!contract) return null;
+    if (!SIMPLE_STORAGE_PACKAGE) {
+      console.warn("Simple storage package ID not configured");
+      return null;
+    }
     
-    const value = await contract.get();
-    return value.toNumber();
+    const result = await callMoveFunction(
+      client,
+      objectId,
+      SIMPLE_STORAGE_PACKAGE,
+      SIMPLE_STORAGE_MODULE,
+      "get_value",
+      []
+    );
+    
+    // Parse the result to get the stored value
+    if (result.results && result.results[0] && result.results[0].returnValues) {
+      const returnValue = result.results[0].returnValues[0];
+      return Number(returnValue[0]); // Convert to number
+    }
+    
+    return null;
   } catch (error) {
     console.error("Error fetching stored value:", error);
     toast.error("Failed to fetch stored value");
@@ -58,22 +42,104 @@ export const getStoredValue = async (provider: ethers.providers.Web3Provider): P
 };
 
 export const setStoredValue = async (
-  provider: ethers.providers.Web3Provider,
+  client: SuiClient,
+  keypair: Ed25519Keypair,
+  objectId: string,
   value: number
 ): Promise<boolean> => {
   try {
-    const contract = getSimpleStorageContract(provider);
-    if (!contract) return false;
+    if (!SIMPLE_STORAGE_PACKAGE) {
+      console.warn("Simple storage package ID not configured");
+      toast.error("Simple storage contract not configured");
+      return false;
+    }
     
-    const tx = await contract.set(value);
-    toast.info("Transaction submitted, waiting for confirmation...");
+    const result = await executeMoveFunction(
+      client,
+      keypair,
+      SIMPLE_STORAGE_PACKAGE,
+      SIMPLE_STORAGE_MODULE,
+      "set_value",
+      [objectId, value.toString()]
+    );
     
-    await tx.wait();
-    toast.success("Value successfully updated");
-    return true;
+    if (result.effects?.status?.status === 'success') {
+      toast.success("Value successfully updated");
+      return true;
+    } else {
+      console.error("Update failed:", result.effects?.status?.error);
+      toast.error("Failed to update value");
+      return false;
+    }
   } catch (error) {
     console.error("Error setting stored value:", error);
     toast.error("Failed to update value");
     return false;
+  }
+};
+
+export const createSimpleStorage = async (
+  client: SuiClient,
+  keypair: Ed25519Keypair,
+  initialValue: number = 0
+): Promise<string | null> => {
+  try {
+    if (!SIMPLE_STORAGE_PACKAGE) {
+      console.warn("Simple storage package ID not configured");
+      toast.error("Simple storage contract not configured");
+      return null;
+    }
+    
+    const result = await executeMoveFunction(
+      client,
+      keypair,
+      SIMPLE_STORAGE_PACKAGE,
+      SIMPLE_STORAGE_MODULE,
+      "create_storage",
+      [initialValue.toString()]
+    );
+    
+    if (result.effects?.status?.status === 'success' && result.effects?.created) {
+      const createdObject = result.effects.created[0];
+      toast.success("Simple storage created successfully");
+      return createdObject.reference.objectId;
+    } else {
+      console.error("Creation failed:", result.effects?.status?.error);
+      toast.error("Failed to create simple storage");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error creating simple storage:", error);
+    toast.error("Failed to create simple storage");
+    return null;
+  }
+};
+
+// Helper function to get storage object details
+export const getStorageDetails = async (
+  client: SuiClient,
+  objectId: string
+): Promise<{ value: number; owner: string } | null> => {
+  try {
+    const object = await client.getObject({
+      id: objectId,
+      options: {
+        showContent: true,
+        showOwner: true,
+      },
+    });
+    
+    if (object.data?.content && 'fields' in object.data.content) {
+      const fields = object.data.content.fields as any;
+      return {
+        value: Number(fields.value || 0),
+        owner: object.data.owner?.AddressOwner || 'Unknown'
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error getting storage details:", error);
+    return null;
   }
 };

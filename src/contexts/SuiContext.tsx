@@ -5,19 +5,13 @@ import {
   SuiTransactionBlockResponse,
   SuiObjectData
 } from '@mysten/sui.js/client';
-import { 
-  Ed25519Keypair,
-  fromB64
-} from '@mysten/sui.js/keypairs/ed25519';
-import { 
-  TransactionBlock,
-  normalizeSuiAddress
-} from '@mysten/sui.js/transactions';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { 
   requestSuiFromFaucetV0,
   getFaucetHost
 } from '@mysten/sui.js/faucet';
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 type SuiContextType = {
   client: SuiClient | null;
@@ -41,7 +35,7 @@ type SuiContextType = {
   transferSui: (toAddress: string, amount: number) => Promise<string>;
   
   // Contract operations (Move modules)
-  deployContract: (compiledModules: number[], dependencies: string[]) => Promise<string>;
+  deployContract: (compiledModules: Uint8Array[], dependencies: string[]) => Promise<string>;
   executeContract: (packageId: string, moduleName: string, functionName: string, args: any[], typeArgs?: string[]) => Promise<string>;
   callContract: (packageId: string, moduleName: string, functionName: string, args: any[], typeArgs?: string[]) => Promise<any>;
   
@@ -51,7 +45,7 @@ type SuiContextType = {
   releaseFunds: (escrowId: string) => Promise<string>;
 };
 
-const SuiContext = createContext<SuiContextType | undefined>(undefined);
+export const SuiContext = createContext<SuiContextType | undefined>(undefined);
 
 export const SuiProvider = ({ children }: { children: ReactNode }) => {
   const [client, setClient] = useState<SuiClient | null>(null);
@@ -298,7 +292,7 @@ export const SuiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Deploy a Move contract (package)
-  const deployContract = async (compiledModules: number[], dependencies: string[]): Promise<string> => {
+  const deployContract = async (compiledModules: Uint8Array[], dependencies: string[]): Promise<string> => {
     try {
       if (!client || !keypair) {
         throw new Error("Client or keypair not initialized");

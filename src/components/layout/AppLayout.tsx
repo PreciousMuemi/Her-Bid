@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useHedera } from "@/contexts/HederaContext";
+import { useSui } from "@/hooks/useSui";
 import AppSidebar from './AppSidebar';
 import AppHeader from './AppHeader';
 import { toast } from "sonner";

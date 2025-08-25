@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHedera } from '../contexts/HederaContext';
+import { useSui } from '../hooks/useSui';
 import ContractInteraction from '../pages/ContractInteraction';
 
 // Sample escrow contract bytecode and ABI

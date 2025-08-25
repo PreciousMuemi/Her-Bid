@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { useHedera } from "@/contexts/HederaContext";
+import { useSui } from "@/hooks/useSui";
 import { useThemeStore } from "@/store/themeStore";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

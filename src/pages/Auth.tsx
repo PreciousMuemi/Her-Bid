@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useHedera } from "@/hooks/useHedera";
+import { useSui } from "@/hooks/useSui";
 import { useThemeStore } from "@/store/themeStore";
 import { toast } from "sonner";
 import { Wallet, Shield, UserRoundPlus, Loader2, Building, Briefcase } from "lucide-react";
@@ -33,7 +33,7 @@ enum WalletType {
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { connectMetaMask } = useHedera();
+  const { connectWallet } = useSui();
   
   const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.LOGIN);
   const [isConnecting, setIsConnecting] = useState(false);

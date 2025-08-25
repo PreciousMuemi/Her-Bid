@@ -10,7 +10,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import SuiPage from "./pages/SuiPage";
-import MetaMaskPage from "./pages/MetaMaskPage";
 import NotFound from "./pages/NotFound";
 import CreateConsortium from './pages/Consortium';
 import ManageEscrow from './pages/ManageEscrow';
@@ -64,7 +63,6 @@ const App = () => {
                 <Route path="profile" element={<Profile />} />
                 <Route path="quick-profile" element={<QuickProfileGuide />} />
                 <Route path="sui" element={<SuiPage />} />
-                <Route path="metamask" element={<MetaMaskPage />} />
                 <Route path="create-consortium" element={<CreateConsortium />} />
                 <Route path="collective-engine" element={<CollectiveEngine />} />
                 <Route path="manage-escrow" element={<ManageEscrow />} />

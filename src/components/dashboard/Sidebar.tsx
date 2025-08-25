@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
-import { useHedera } from '@/contexts/HederaContext';
+import { useSui } from '@/hooks/useSui';
 import { 
   LayoutDashboard, Users, Briefcase, ShieldCheck, Award, 
   Settings, LogOut, ChevronLeft, ChevronRight, HelpCircle,
