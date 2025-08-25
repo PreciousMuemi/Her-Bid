@@ -200,7 +200,7 @@ const Feedback = () => {
               </h3>
               <p className={`mb-6 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
                 We've received your submission and will review it promptly.
-                {formData.email && ' We'll get back to you via email if needed.'}
+                {formData.email && " We'll get back to you via email if needed."}
               </p>
               <CustomButton 
                 onClick={() => {
