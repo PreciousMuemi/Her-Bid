@@ -2,21 +2,21 @@ import React from 'react';
 import { useSui } from '../hooks/useSui';
 
 const Auth: React.FC = () => {
-  const { connectMetaMask, ethAddress, isConnected } = useHedera();
+  const { connectWallet, address, isConnected } = useSui();
 
-  const handleMetaMaskConnect = async () => {
-    const success = await connectMetaMask();
-    if (success) {
-      console.log('MetaMask connected successfully');
-    } else {
-      console.error('Failed to connect MetaMask');
+  const handleWalletConnect = async () => {
+    try {
+      await connectWallet();
+      console.log('Wallet connected successfully');
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
     }
   };
 
   return (
     <div>
-      <button onClick={handleMetaMaskConnect}>Connect MetaMask</button>
-      {isConnected && <p>Connected Address: {ethAddress}</p>}
+      <button onClick={handleWalletConnect}>Connect Sui Wallet</button>
+      {isConnected && <p>Connected Address: {address}</p>}
     </div>
   );
 };

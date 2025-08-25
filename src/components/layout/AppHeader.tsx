@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 const AppHeader = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { accountId, disconnectFromHedera } = useHedera();
+  
   const [username, setUsername] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [notificationCount, setNotificationCount] = useState(3);
@@ -46,7 +46,7 @@ const AppHeader = () => {
   });
   
   const handleLogout = () => {
-    disconnectFromHedera();
+   
     localStorage.removeItem("isAuthenticated");
     toast.success('Logged out successfully');
     navigate('/');

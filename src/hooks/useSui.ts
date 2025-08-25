@@ -1,12 +1,4 @@
-import { useContext } from 'react';
-import { SuiContext } from '@/contexts/SuiContext';
+import { useSui } from '@/contexts/SuiContext';
 
-export const useSui = () => {
-  const context = useContext(SuiContext);
-  
-  if (context === undefined) {
-    throw new Error('useSui must be used within a SuiProvider');
-  }
-  
-  return context;
-};
+// Re-export the hook for convenience
+export { useSui };

@@ -37,7 +37,7 @@ interface Proposal {
 const IssuerDashboard = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { isConnected, accountId, balance, disconnectFromHedera } = useHedera();
+  const { isConnected, address, balance, disconnectWallet } = useSui();
   const [isLoading, setIsLoading] = useState(false);
   const [greeting, setGreeting] = useState("Welcome!");
   const [timeOfDay, setTimeOfDay] = useState("");

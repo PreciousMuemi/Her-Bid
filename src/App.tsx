@@ -9,11 +9,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Pages
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import SuiPage from "./pages/SuiPage";
 import NotFound from "./pages/NotFound";
-import CreateConsortium from './pages/Consortium';
-import ManageEscrow from './pages/ManageEscrow';
-import TokenManagement from './pages/TokenManagement';
+// import CreateConsortium from './pages/Consortium';
+// import ManageEscrow from './pages/ManageEscrow';
+// import TokenManagement from './pages/TokenManagement';
 import AuthPage from './pages/Auth';
 import DeploymentGuidePage from './pages/DeploymentGuide';
 import Profile from './pages/Profile';
@@ -62,14 +61,10 @@ const App = () => {
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="quick-profile" element={<QuickProfileGuide />} />
-                <Route path="sui" element={<SuiPage />} />
-                <Route path="create-consortium" element={<CreateConsortium />} />
                 <Route path="collective-engine" element={<CollectiveEngine />} />
-                <Route path="manage-escrow" element={<ManageEscrow />} />
                 <Route path="secure-payments" element={<SecurePayments />} />
                 <Route path="skill-verification" element={<SkillVerification />} />
                 <Route path="opportunities" element={<Opportunities />} />
-                <Route path="token-management" element={<TokenManagement />} />
                 <Route path="contracts/:id" element={<ContractDetails />} />
                 <Route path="feedback" element={<Feedback />} />
               </Route>

@@ -19,7 +19,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }: SidebarProps) => {
   const { theme, setTheme } = useThemeStore();
-  const { disconnectFromHedera } = useHedera();
+ 
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === 'dark';
