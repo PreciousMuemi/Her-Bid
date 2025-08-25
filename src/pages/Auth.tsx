@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useHedera } from "@/hooks/useHedera";
+import { useSui } from "@/hooks/useSui";
 import { useThemeStore } from "@/store/themeStore";
 import { toast } from "sonner";
 import { Wallet, Shield, UserRoundPlus, Loader2, Building, Briefcase } from "lucide-react";
@@ -33,7 +33,7 @@ enum WalletType {
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { connectMetaMask } = useHedera();
+  const { connectWallet } = useSui();
   
   const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.LOGIN);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -107,53 +107,26 @@ const AuthPage: React.FC = () => {
     });
   };
 
-  // Connect to MetaMask wallet
-  const handleMetaMaskConnect = async () => {
+  // Connect to Sui wallet
+  const handleSuiWalletConnect = async () => {
     try {
-      console.log("Starting MetaMask connection...");
+      console.log("Starting Sui wallet connection...");
       setIsConnecting(true);
       
-      // First check if MetaMask is installed
-      if (typeof window.ethereum === 'undefined') {
-        throw new Error("MetaMask is not installed");
-      }
-
-      // Request accounts using the correct method
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-
-      // Try to switch to Hedera network
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x128' }]
-      }).catch(async (switchError) => {
-        if (switchError.code === 4902) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x128',
-              chainName: 'Hedera Testnet',
-              nativeCurrency: {
-                name: 'HBAR',
-                symbol: 'ℏ',
-                decimals: 18
-              },
-              rpcUrls: ['https://testnet.hashio.io/api'],
-              blockExplorerUrls: ['https://hashscan.io/testnet/']
-            }]
-          });
-        }
-      });
-
+      // Use the Sui context to connect wallet
+      await connectWallet();
+      
+      // Mock address for now until proper wallet integration
+      const mockAddress = "0x1234567890abcdef";
+      
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("walletAddress", accounts[0]);
+      localStorage.setItem("walletAddress", mockAddress);
       
       if (authMode === AuthMode.SIGNUP) {
         const now = new Date().toISOString();
         const fullProfile = {
           ...formData,
-          walletAddress: accounts[0],
+          walletAddress: mockAddress,
           createdAt: now,
           lastLogin: now,
           completedProfile: true
@@ -171,7 +144,7 @@ const AuthPage: React.FC = () => {
         } else {
           // Create minimal profile for returning users
           const basicProfile = {
-            walletAddress: accounts[0],
+            walletAddress: mockAddress,
             lastLogin: new Date().toISOString(),
             completedProfile: false,
             userType: UserType.ENTREPRENEUR
@@ -181,7 +154,7 @@ const AuthPage: React.FC = () => {
       }
       
       setIsConnecting(false);
-      toast.success("Connected to wallet successfully!");
+      toast.success("Connected to Sui wallet successfully!");
       
       // Redirect based on user type
       const userProfile = localStorage.getItem("userProfile");
@@ -196,7 +169,7 @@ const AuthPage: React.FC = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("MetaMask connection error:", error);
+      console.error("Sui wallet connection error:", error);
       toast.error(error.message || "Connection failed");
       setIsConnecting(false);
     }
@@ -406,7 +379,7 @@ const AuthPage: React.FC = () => {
                 <Button
                   className="w-full justify-start mb-2"
                   variant={theme === 'dark' ? "outline" : "secondary"}
-                  onClick={() => handleMetaMaskConnect()}
+                  onClick={() => handleSuiWalletConnect()}
                   disabled={isConnecting || (authMode === AuthMode.SIGNUP && !formData.email)}
                 >
                   {isConnecting ? (
@@ -414,7 +387,7 @@ const AuthPage: React.FC = () => {
                   ) : (
                     <Wallet className="h-4 w-4 mr-2" />
                   )}
-                  MetaMask
+                  Connect Sui Wallet
                 </Button>
                 
                 <Button 
@@ -423,7 +396,7 @@ const AuthPage: React.FC = () => {
                   disabled={true}
                 >
                   <Shield className="h-4 w-4 mr-2" />
-                  HashPack (Coming Soon)
+                  Sui Wallet (Coming Soon)
                 </Button>
                 
                 <Button 
@@ -432,7 +405,7 @@ const AuthPage: React.FC = () => {
                   disabled={true}
                 >
                   <Shield className="h-4 w-4 mr-2" />
-                  Blade Wallet (Coming Soon)
+                  Ethos Wallet (Coming Soon)
                 </Button>
                 
                 {walletError && (

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { useHedera } from "@/contexts/HederaContext";
+import { useSui } from "@/hooks/useSui";
 import { useThemeStore } from "@/store/themeStore";
 import { CustomButton } from "@/components/ui/CustomButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +19,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { theme } = useThemeStore();
-  const { isConnected, accountId, balance, connectToHedera, connectMetaMask, disconnectFromHedera } = useHedera();
+  const { isConnected, address, balance, connectWallet, disconnectWallet } = useSui();
   const [isLoading, setIsLoading] = useState(false);
   const [greeting, setGreeting] = useState("Hey there!");
   const [timeOfDay, setTimeOfDay] = useState("");
@@ -88,7 +88,7 @@ const Dashboard = () => {
     
     try {
       // Try to connect with MetaMask first
-      const success = await connectMetaMask();
+      const success = await connectWallet();
       
       if (success) {
         localStorage.setItem("isAuthenticated", "true");
@@ -107,7 +107,7 @@ const Dashboard = () => {
 
   // Disconnect wallet handler
   const handleDisconnectWallet = () => {
-    disconnectFromHedera();
+    disconnectWallet();
     toast.info("Wallet disconnected");
   };
 
@@ -241,7 +241,7 @@ const Dashboard = () => {
           <div className="mr-4">
             <p className={`text-xs ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-500'}`}>Account</p>
             <p className={`text-sm font-mono truncate max-w-[120px] md:max-w-xs ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {accountId}
+              {address}
             </p>
           </div>
           <div className="mr-4 border-l pl-4 border-[#303974]">

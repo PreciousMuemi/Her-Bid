@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
-import { useHedera } from '@/contexts/HederaContext';
+import { useSui } from '@/hooks/useSui';
 import { 
   LayoutDashboard, Users, Briefcase, ShieldCheck, Award, 
   Settings, LogOut, ChevronLeft, ChevronRight, HelpCircle,
@@ -19,7 +19,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }: SidebarProps) => {
   const { theme, setTheme } = useThemeStore();
-  const { disconnectFromHedera } = useHedera();
+ 
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === 'dark';

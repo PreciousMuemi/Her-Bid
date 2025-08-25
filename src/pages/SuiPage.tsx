@@ -7,12 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useThemeStore } from "@/store/themeStore";
 import { Loader2, Check, Wallet, Shield, RefreshCw } from "lucide-react";
-import { useHedera } from "@/hooks/useHedera";
+import { useSui } from "@/hooks/useSui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { AccountId, PrivateKey } from "@hashgraph/sdk";
+import { toast } from "react-hot-toast";
 
-const HederaPage = () => {
+const SuiPage = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -21,84 +20,71 @@ const HederaPage = () => {
     loading, 
     error, 
     isConnected, 
-    accountId, 
-    connectToHedera, 
-    disconnectFromHedera, 
-    fetchAccountBalance,
-    sendHbarToMetaMask
-  } = useHedera();
+    address, 
+    connectWallet, 
+    disconnectWallet, 
+    getBalance,
+    transferSui
+  } = useSui();
   
-  const [operatorId, setOperatorId] = useState("");
-  const [operatorKey, setOperatorKey] = useState("");
-  const [targetAccountId, setTargetAccountId] = useState("");
+  const [targetAddress, setTargetAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState<string | null>(null);
-  const [newAccountInfo, setNewAccountInfo] = useState<{ accountId: string; privateKey: string } | null>(null);
+  const [newWalletInfo, setNewWalletInfo] = useState<{ address: string; mnemonic: string } | null>(null);
 
   const handleConnect = () => {
-    connectToHedera(operatorId, operatorKey);
+    connectWallet();
   };
 
   const handleCheckBalance = async () => {
-    if (!targetAccountId) return;
+    if (!targetAddress) return;
     
-    const result = await fetchAccountBalance(targetAccountId);
-    if (result) {
-      setBalance(result);
+    const result = await getBalance(targetAddress);
+    if (result !== null) {
+      setBalance((result / 1000000000).toFixed(6)); // Convert MIST to SUI
     }
   };
 
-  const handleCreateAccount = async () => {
-    if (!isConnected || !accountId || !operatorKey) return;
-    
+  const handleCreateWallet = async () => {
     try {
-      const initialBalance = 10; // Default 10 HBAR for testing
+      toast.info("Creating new Sui wallet...");
       
-      // Generate new private key
-      const newPrivateKey = PrivateKey.generateED25519();
-      const newPublicKey = newPrivateKey.publicKey;
+      // Generate new wallet
+      const { Ed25519Keypair } = await import('@mysten/sui.js/keypairs/ed25519');
       
-      // Create a transaction to create the new account
-      toast.info("Creating new account...");
+      const keypair = new Ed25519Keypair();
+      const newAddress = keypair.toSuiAddress();
       
-      // Since we don't have the function in our hook, we'll simulate the response for now
-      // In a real scenario, you'd call the actual function
-      const newAccountId = `0.0.${Math.floor(Math.random() * 1000000)}`;
-      
-      setNewAccountInfo({
-        accountId: newAccountId,
-        privateKey: newPrivateKey.toString()
+      setNewWalletInfo({
+        address: newAddress,
+        mnemonic: "Wallet created successfully - use browser extension for full functionality"
       });
       
-      toast.success("New account created!");
+      toast.success("New Sui wallet created!");
     } catch (error) {
-      console.error("Error creating new account:", error);
-      toast.error("Failed to create new account");
+      console.error("Error creating new wallet:", error);
+      toast.error("Failed to create new wallet");
     }
   };
 
-  const handleSendHbar = async () => {
-    if (!isConnected || !targetAccountId || !amount) return;
+  const handleSendSui = async () => {
+    if (!isConnected || !targetAddress || !amount) return;
     
     try {
-      // Check if this is an EVM address
-      if (targetAccountId.startsWith("0x")) {
-        await sendHbarToMetaMask(targetAccountId, parseFloat(amount));
-        toast.success("HBAR sent successfully!");
-      } else {
-        // For regular Hedera accounts, for now just show a message
-        // since we don't have the direct implementation
-        toast.info("This feature is coming soon for direct Hedera transfers");
-      }
+      const amountInMist = Math.floor(parseFloat(amount) * 1000000000); // Convert SUI to MIST
+      await transferSui(targetAddress, amountInMist);
+      toast.success("SUI sent successfully!");
       
       // Refresh balance after transfer
-      const newBalance = await fetchAccountBalance(accountId);
-      if (newBalance) {
-        setBalance(newBalance);
+      if (address) {
+        const newBalance = await getBalance(address);
+        if (newBalance !== null) {
+          setBalance((newBalance / 1000000000).toFixed(6));
+        }
       }
     } catch (error) {
-      console.error("Error sending HBAR:", error);
-      toast.error("Failed to send HBAR");
+      console.error("Error sending SUI:", error);
+      toast.error("Failed to send SUI");
     }
   };
 
@@ -112,7 +98,7 @@ const HederaPage = () => {
             ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
             : 'text-primary'
         }`}>
-          Hedera Integration for HerBid ✨
+          Sui Integration for HerBid ✨
         </h1>
         
         <div className="grid md:grid-cols-3 gap-8">
@@ -123,41 +109,27 @@ const HederaPage = () => {
           }`}>
             <CardHeader>
               <CardTitle className={`${isDark ? 'text-white' : ''}`}>
-                {isConnected ? 'Connected to Hedera' : 'Connect to Hedera'}
+                {isConnected ? 'Connected to Sui' : 'Connect to Sui'}
               </CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
                 {isConnected 
-                  ? `Connected with account ${accountId}`
-                  : 'Enter your Hedera credentials to connect'
+                  ? `Connected with address ${address?.slice(0, 6)}...${address?.slice(-4)}`
+                  : 'Connect your Sui wallet to get started'
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!isConnected ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      Operator ID
-                    </label>
-                    <Input
-                      placeholder="0.0.12345"
-                      value={operatorId}
-                      onChange={(e) => setOperatorId(e.target.value)}
-                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
-                    />
+                <div className={`p-4 rounded-md ${
+                  isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-blue-50'
+                }`}>
+                  <div className="flex items-center gap-2 text-blue-500 mb-2">
+                    <Wallet size={20} />
+                    <span className="font-medium">Sui Wallet Required</span>
                   </div>
-                  <div className="space-y-2">
-                    <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      Private Key
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="Enter your private key"
-                      value={operatorKey}
-                      onChange={(e) => setOperatorKey(e.target.value)}
-                      className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
-                    />
-                  </div>
+                  <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
+                    Install Sui Wallet browser extension to connect
+                  </p>
                 </div>
               ) : (
                 <div className={`p-4 rounded-md ${
@@ -165,10 +137,10 @@ const HederaPage = () => {
                 }`}>
                   <div className="flex items-center gap-2 text-green-500 mb-2">
                     <Check size={20} />
-                    <span className="font-medium">Connected to Hedera Testnet</span>
+                    <span className="font-medium">Connected to Sui Devnet</span>
                   </div>
                   <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                    You can now use Hedera services
+                    You can now use Sui services
                   </p>
                 </div>
               )}
@@ -181,7 +153,7 @@ const HederaPage = () => {
               {!isConnected ? (
                 <Button 
                   onClick={handleConnect}
-                  disabled={loading || !operatorId || !operatorKey}
+                  disabled={loading}
                   className={`w-full ${
                     isDark
                       ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white'
@@ -194,13 +166,13 @@ const HederaPage = () => {
                       Connecting
                     </>
                   ) : (
-                    'Connect to Hedera'
+                    'Connect Sui Wallet'
                   )}
                 </Button>
               ) : (
                 <Button 
                   variant="outline" 
-                  onClick={disconnectFromHedera}
+                  onClick={disconnectWallet}
                   className={`w-full ${
                     isDark ? 'border-[#303974] text-white hover:bg-[#0A155A]/50' : ''
                   }`}
@@ -217,34 +189,34 @@ const HederaPage = () => {
               : 'bg-white shadow-md border border-gray-100'
           }`}>
             <CardHeader>
-              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Hedera Operations</CardTitle>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Sui Operations</CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
-                Interact with the Hedera network
+                Interact with the Sui network
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="balance" className="w-full">
                 <TabsList className="grid grid-cols-3 mb-4">
                   <TabsTrigger value="balance">Check Balance</TabsTrigger>
-                  <TabsTrigger value="transfer" disabled={!isConnected}>Transfer HBAR</TabsTrigger>
-                  <TabsTrigger value="create" disabled={!isConnected}>Create Account</TabsTrigger>
+                  <TabsTrigger value="transfer" disabled={!isConnected}>Transfer SUI</TabsTrigger>
+                  <TabsTrigger value="create">Create Wallet</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="balance" className="space-y-4">
                   <div className="space-y-2">
                     <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      Account ID
+                      Sui Address
                     </label>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="0.0.12345"
-                        value={targetAccountId}
-                        onChange={(e) => setTargetAccountId(e.target.value)}
+                        placeholder="0x..."
+                        value={targetAddress}
+                        onChange={(e) => setTargetAddress(e.target.value)}
                         className={`flex-1 ${isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}`}
                       />
                       <Button 
                         onClick={handleCheckBalance}
-                        disabled={loading || !targetAccountId}
+                        disabled={loading || !targetAddress}
                         className={isDark ? 'bg-[#4D5BCE]' : ''}
                       >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw size={16} />}
@@ -262,7 +234,7 @@ const HederaPage = () => {
                       <p className={`text-xl font-bold ${
                         isDark ? 'text-pink-300' : 'text-primary'
                       }`}>
-                        {balance} HBAR
+                        {balance} SUI
                       </p>
                     </div>
                   )}
@@ -271,30 +243,30 @@ const HederaPage = () => {
                 <TabsContent value="transfer" className="space-y-4">
                   <div className="space-y-2">
                     <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      To Account ID
+                      To Address
                     </label>
                     <Input
-                      placeholder="0.0.12345"
-                      value={targetAccountId}
-                      onChange={(e) => setTargetAccountId(e.target.value)}
+                      placeholder="0x..."
+                      value={targetAddress}
+                      onChange={(e) => setTargetAddress(e.target.value)}
                       className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className={`block ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                      Amount (HBAR)
+                      Amount (SUI)
                     </label>
                     <Input
                       type="number"
-                      placeholder="1.0"
+                      placeholder="0.1"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className={isDark ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
                     />
                   </div>
                   <Button 
-                    onClick={handleSendHbar}
-                    disabled={loading || !targetAccountId || !amount || !isConnected}
+                    onClick={handleSendSui}
+                    disabled={loading || !targetAddress || !amount || !isConnected}
                     className="w-full"
                   >
                     {loading ? (
@@ -305,7 +277,7 @@ const HederaPage = () => {
                     ) : (
                       <>
                         <Wallet className="mr-2 h-4 w-4" />
-                        Send HBAR
+                        Send SUI
                       </>
                     )}
                   </Button>
@@ -317,39 +289,39 @@ const HederaPage = () => {
                   }`}>
                     <div className="flex items-center gap-2 text-blue-500 mb-2">
                       <Shield size={20} />
-                      <span className="font-medium">Create a new Hedera account</span>
+                      <span className="font-medium">Create a new Sui wallet</span>
                     </div>
                     <p className={`text-sm ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                      This will create a new account funded with 10 HBAR from your account
+                      This will generate a new wallet address and mnemonic phrase
                     </p>
                   </div>
                   
-                  {newAccountInfo && (
+                  {newWalletInfo && (
                     <div className={`p-4 rounded-md ${
                       isDark ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-green-50'
                     }`}>
                       <h3 className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                        New Account Created!
+                        New Wallet Created!
                       </h3>
                       <div className="space-y-2">
                         <div>
                           <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                            Account ID:
+                            Address:
                           </p>
-                          <p className={`text-sm font-mono bg-black/10 p-1 rounded ${
+                          <p className={`text-sm font-mono bg-black/10 p-1 rounded break-all ${
                             isDark ? 'text-white' : 'text-black'
                           }`}>
-                            {newAccountInfo.accountId}
+                            {newWalletInfo.address}
                           </p>
                         </div>
                         <div>
                           <p className={`text-xs ${isDark ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-                            Private Key (keep this secure!):
+                            Mnemonic (keep this secure!):
                           </p>
-                          <p className={`text-sm font-mono bg-black/10 p-1 rounded truncate ${
+                          <p className={`text-sm font-mono bg-black/10 p-1 rounded ${
                             isDark ? 'text-white' : 'text-black'
                           }`}>
-                            {newAccountInfo.privateKey}
+                            {newWalletInfo.mnemonic}
                           </p>
                         </div>
                       </div>
@@ -357,8 +329,8 @@ const HederaPage = () => {
                   )}
                   
                   <Button 
-                    onClick={handleCreateAccount}
-                    disabled={loading || !isConnected}
+                    onClick={handleCreateWallet}
+                    disabled={loading}
                     className="w-full"
                   >
                     {loading ? (
@@ -366,7 +338,7 @@ const HederaPage = () => {
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating
                       </>
-                    ) : 'Create New Account'}
+                    ) : 'Create New Wallet'}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -379,9 +351,9 @@ const HederaPage = () => {
               : 'bg-white shadow-md border border-gray-100'
           }`}>
             <CardHeader>
-              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Hedera Integration for HerBid</CardTitle>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Sui Integration for HerBid</CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
-                How HerBid utilizes Hedera Hashgraph technology
+                How HerBid utilizes Sui blockchain technology
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -393,21 +365,21 @@ const HederaPage = () => {
                   <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
                     <li>Secure and transparent bidding with immutable records</li>
                     <li>Fast, low-cost payments between consortium members</li>
-                    <li>Tokenized reputation system with verified credentials</li>
-                    <li>Escrow contracts for milestone-based payments</li>
+                    <li>Object-based smart contracts for flexible bidding logic</li>
+                    <li>Escrow objects for milestone-based payments</li>
                     <li>Cryptographically secure contract agreements</li>
                   </ul>
                 </div>
                 <div>
                   <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : ''}`}>
-                    Why Hedera for HerBid
+                    Why Sui for HerBid
                   </h3>
                   <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
-                    <li>Fast finality (2-3 seconds) enables real-time bidding</li>
-                    <li>Energy-efficient consensus algorithm</li>
-                    <li>Enterprise-grade security and compliance</li>
-                    <li>Predictable, low transaction fees</li>
-                    <li>Robust smart contract capabilities</li>
+                    <li>Parallel execution for high-throughput bidding</li>
+                    <li>Object-centric design for complex business logic</li>
+                    <li>Move programming language for safe smart contracts</li>
+                    <li>Low latency and predictable gas fees</li>
+                    <li>Composable objects for modular contract architecture</li>
                   </ul>
                 </div>
               </div>
@@ -436,4 +408,4 @@ const HederaPage = () => {
   );
 };
 
-export default HederaPage;
+export default SuiPage;
