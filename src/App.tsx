@@ -9,7 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Pages
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import HederaPage from "./pages/HederaPage";
+import SuiPage from "./pages/SuiPage";
 import MetaMaskPage from "./pages/MetaMaskPage";
 import NotFound from "./pages/NotFound";
 import CreateConsortium from './pages/Consortium';
@@ -30,7 +30,7 @@ import Feedback from './components/Feedback';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
-import { HederaProvider } from "./contexts/HederaContext";
+import { SuiProvider } from "./contexts/SuiContext";
 import AppLayout from "./components/layout/AppLayout";
 
 // Create QueryClient outside component to prevent re-creation on render
@@ -47,7 +47,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <HederaProvider>
+        <SuiProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -63,7 +63,7 @@ const App = () => {
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="quick-profile" element={<QuickProfileGuide />} />
-                <Route path="hedera" element={<HederaPage />} />
+                <Route path="sui" element={<SuiPage />} />
                 <Route path="metamask" element={<MetaMaskPage />} />
                 <Route path="create-consortium" element={<CreateConsortium />} />
                 <Route path="collective-engine" element={<CollectiveEngine />} />
@@ -80,7 +80,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </HederaProvider>
+        </SuiProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

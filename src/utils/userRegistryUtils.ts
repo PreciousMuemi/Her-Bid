@@ -1,54 +1,13 @@
 
-import { ethers } from "ethers";
-import { Client, ContractCallQuery, ContractExecuteTransaction, ContractFunctionParameters, ContractId } from "@hashgraph/sdk";
+import { SuiClient } from '@mysten/sui.js/client';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toast } from "sonner";
+import { executeMoveFunction, callMoveFunction, validateSuiAddress } from './suiUtils';
 
-// ABI for UserRegistry contract
-const userRegistryAbi = [
-  {
-    "inputs": [
-      {"internalType": "string", "name": "businessName", "type": "string"},
-      {"internalType": "string", "name": "email", "type": "string"},
-      {"internalType": "string", "name": "industry", "type": "string"},
-      {"internalType": "string", "name": "skills", "type": "string"}
-    ],
-    "name": "registerUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "verifyUser",
-    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "getUserProfile",
-    "outputs": [
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "string", "name": "", "type": "string"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "address", "name": "userAddress", "type": "address"},
-      {"indexed": false, "internalType": "string", "name": "businessName", "type": "string"}
-    ],
-    "name": "UserRegistered",
-    "type": "event"
-  }
-];
-
-// Get contract address from environment variable
-const USER_REGISTRY_CONTRACT = import.meta.env.VITE_USER_REGISTRY_CONTRACT || "0x0000000000000000000000000000000000000000";
+// Get package and module info from environment variables
+const USER_REGISTRY_PACKAGE = import.meta.env.VITE_USER_REGISTRY_PACKAGE || "";
+const USER_REGISTRY_MODULE = "user_registry";
 
 // Check if a user exists using Ethereum provider
 export const checkUserExistsEth = async (provider: ethers.providers.Web3Provider, address: string): Promise<boolean> => {
@@ -91,91 +50,198 @@ export const registerUserEth = async (
 export const checkUserExistsHedera = async (client: Client, accountId: string): Promise<boolean> => {
   try {
     const contractId = ContractId.fromString(USER_REGISTRY_CONTRACT.replace('0x', ''));
+// Check if a user exists using Sui client
+export const checkUserExistsSui = async (client: SuiClient, address: string): Promise<boolean> => {
+  try {
+    if (!USER_REGISTRY_PACKAGE) {
+      console.warn("User registry package ID not configured");
+      return false;
+    }
+
+    const validAddress = validateSuiAddress(address);
     
-    // Convert Hedera account ID to EVM address if needed
-    const evmAddress = accountId.startsWith('0x') ? accountId : await convertHederaToEVMAddress(accountId);
+    const result = await callMoveFunction(
+      client,
+      validAddress,
+      USER_REGISTRY_PACKAGE,
+      USER_REGISTRY_MODULE,
+      "user_exists",
+      [validAddress]
+    );
     
-    const query = new ContractCallQuery()
-      .setContractId(contractId)
-      .setGas(100000)
-      .setFunction("verifyUser", new ContractFunctionParameters().addAddress(evmAddress));
+    // Parse the result to get the boolean value
+    if (result.results && result.results[0] && result.results[0].returnValues) {
+      const returnValue = result.results[0].returnValues[0];
+      return returnValue[0] === 1; // Move returns 1 for true, 0 for false
+    }
     
-    const response = await query.execute(client);
-    return response.getBool(0);
+    return false;
   } catch (error) {
-    console.error("Error checking user existence (Hedera):", error);
+    console.error("Error checking user existence (Sui):", error);
     toast.error("Failed to verify user account");
     throw error;
   }
 };
 
-// Register user using Hedera client
-export const registerUserHedera = async (
-  client: Client, 
-  accountId: string,
+// Register user using Sui client
+export const registerUserSui = async (
+  client: SuiClient,
+  keypair: Ed25519Keypair,
   formData: { businessName: string; email: string; industry: string; skills: string }
 ): Promise<boolean> => {
   try {
-    const contractId = ContractId.fromString(USER_REGISTRY_CONTRACT.replace('0x', ''));
+    if (!USER_REGISTRY_PACKAGE) {
+      console.warn("User registry package ID not configured");
+      toast.error("User registry not configured");
+      return false;
+    }
+
+    const result = await executeMoveFunction(
+      client,
+      keypair,
+      USER_REGISTRY_PACKAGE,
+      USER_REGISTRY_MODULE,
+      "register_user",
+      [
+        formData.businessName,
+        formData.email,
+        formData.industry,
+        formData.skills
+      ]
+    );
     
-    // Convert Hedera account ID to EVM address if needed
-    const evmAddress = accountId.startsWith('0x') ? accountId : await convertHederaToEVMAddress(accountId);
-    
-    const transaction = new ContractExecuteTransaction()
-      .setContractId(contractId)
-      .setGas(300000)
-      .setFunction(
-        "registerUser", 
-        new ContractFunctionParameters()
-          .addString(formData.businessName)
-          .addString(formData.email)
-          .addString(formData.industry)
-          .addString(formData.skills)
-      );
-    
-    const txResponse = await transaction.execute(client);
-    const receipt = await txResponse.getReceipt(client);
-    
-    return receipt.status.toString() === "SUCCESS";
+    if (result.effects?.status?.status === 'success') {
+      toast.success("User registered successfully");
+      return true;
+    } else {
+      console.error("Registration failed:", result.effects?.status?.error);
+      toast.error("Failed to register user");
+      return false;
+    }
   } catch (error) {
-    console.error("Error registering user (Hedera):", error);
+    console.error("Error registering user (Sui):", error);
     toast.error("Failed to register user");
     throw error;
   }
 };
 
-// Helper function to convert Hedera account ID to EVM address
-export const convertHederaToEVMAddress = async (accountId: string): Promise<string> => {
+// Get user profile using Sui client
+export const getUserProfileSui = async (
+  client: SuiClient,
+  address: string
+): Promise<{
+  businessName: string;
+  email: string;
+  industry: string;
+  skills: string;
+} | null> => {
   try {
-    // This is a placeholder - in a real app you would:
-    // 1. Use the Mirror Node API to get the EVM address of a Hedera account
-    // 2. OR use SDK utility functions like AccountId.fromString(accountId).toSolidityAddress()
+    if (!USER_REGISTRY_PACKAGE) {
+      console.warn("User registry package ID not configured");
+      return null;
+    }
+
+    const validAddress = validateSuiAddress(address);
     
-    const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}`);
-    if (!response.ok) throw new Error("Failed to fetch account information");
+    const result = await callMoveFunction(
+      client,
+      validAddress,
+      USER_REGISTRY_PACKAGE,
+      USER_REGISTRY_MODULE,
+      "get_user_profile",
+      [validAddress]
+    );
     
-    const data = await response.json();
-    return data.evm_address || `0x${accountId.replace(/\D/g, '')}`;
+    // Parse the result to get the user profile
+    if (result.results && result.results[0] && result.results[0].returnValues) {
+      const returnValues = result.results[0].returnValues;
+      
+      if (returnValues.length >= 4) {
+        return {
+          businessName: returnValues[0][1], // Assuming string values are at index 1
+          email: returnValues[1][1],
+          industry: returnValues[2][1],
+          skills: returnValues[3][1]
+        };
+      }
+    }
+    
+    return null;
   } catch (error) {
-    console.error("Error converting Hedera ID to EVM address:", error);
+    console.error("Error getting user profile (Sui):", error);
+    toast.error("Failed to get user profile");
     throw error;
   }
 };
 
-// Helper function to convert EVM address to Hedera account ID
-export const convertEVMToHederaId = async (evmAddress: string): Promise<string> => {
+// Check if a user is verified using Sui client
+export const checkUserVerifiedSui = async (client: SuiClient, address: string): Promise<boolean> => {
   try {
-    const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts?evm_address=${evmAddress}`);
-    if (!response.ok) throw new Error("Failed to fetch account information");
+    if (!USER_REGISTRY_PACKAGE) {
+      console.warn("User registry package ID not configured");
+      return false;
+    }
+
+    const validAddress = validateSuiAddress(address);
     
-    const data = await response.json();
-    if (data.accounts && data.accounts.length > 0) {
-      return data.accounts[0].account;
+    const result = await callMoveFunction(
+      client,
+      validAddress,
+      USER_REGISTRY_PACKAGE,
+      USER_REGISTRY_MODULE,
+      "is_user_verified",
+      [validAddress]
+    );
+    
+    // Parse the result to get the boolean value
+    if (result.results && result.results[0] && result.results[0].returnValues) {
+      const returnValue = result.results[0].returnValues[0];
+      return returnValue[0] === 1; // Move returns 1 for true, 0 for false
     }
     
-    throw new Error("No Hedera account found for this EVM address");
+    return false;
   } catch (error) {
-    console.error("Error converting EVM address to Hedera ID:", error);
+    console.error("Error checking user verification (Sui):", error);
+    toast.error("Failed to check user verification status");
+    throw error;
+  }
+};
+
+// Verify a user using Sui client (admin function)
+export const verifyUserSui = async (
+  client: SuiClient,
+  adminKeypair: Ed25519Keypair,
+  userAddress: string
+): Promise<boolean> => {
+  try {
+    if (!USER_REGISTRY_PACKAGE) {
+      console.warn("User registry package ID not configured");
+      toast.error("User registry not configured");
+      return false;
+    }
+
+    const validAddress = validateSuiAddress(userAddress);
+    
+    const result = await executeMoveFunction(
+      client,
+      adminKeypair,
+      USER_REGISTRY_PACKAGE,
+      USER_REGISTRY_MODULE,
+      "verify_user",
+      [validAddress]
+    );
+    
+    if (result.effects?.status?.status === 'success') {
+      toast.success("User verified successfully");
+      return true;
+    } else {
+      console.error("Verification failed:", result.effects?.status?.error);
+      toast.error("Failed to verify user");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error verifying user (Sui):", error);
+    toast.error("Failed to verify user");
     throw error;
   }
 };
