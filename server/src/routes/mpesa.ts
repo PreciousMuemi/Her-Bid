@@ -1,6 +1,6 @@
-const express = require('express');
-const axios = require('axios');
-const { db } = require('../models/database');
+import express from 'express';
+import axios from 'axios';
+import { db } from '../models/database.js';
 
 const router = express.Router();
 
@@ -243,4 +243,4 @@ router.get('/status/:checkout_request_id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

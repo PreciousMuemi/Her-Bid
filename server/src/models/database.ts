@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+import { Pool, QueryResult } from 'pg';
 
 // PostgreSQL connection configuration
 const pool = new Pool({
@@ -126,10 +126,10 @@ const createTables = async () => {
 
 // Database query helper functions
 const db = {
-  query: (text, params) => pool.query(text, params),
+  query: (text: string, params?: any[]): Promise<QueryResult> => pool.query(text, params),
   
   // User operations
-  createUser: async (userData) => {
+  createUser: async (userData: any) => {
     const { email, password_hash, google_id, full_name, phone, location, skills, bio } = userData;
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, google_id, full_name, phone, location, skills, bio)
@@ -139,18 +139,18 @@ const db = {
     return result.rows[0];
   },
 
-  getUserByEmail: async (email) => {
+  getUserByEmail: async (email: string) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     return result.rows[0];
   },
 
-  getUserById: async (id) => {
+  getUserById: async (id: number) => {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
     return result.rows[0];
   },
 
   // Job operations
-  createJob: async (jobData) => {
+  createJob: async (jobData: any) => {
     const { title, description, category, budget, location, deadline, poster_id, tags, milestones } = jobData;
     
     const client = await pool.connect();
@@ -196,7 +196,7 @@ const db = {
     }
   },
 
-  getJobs: async (filters = {}) => {
+  getJobs: async (filters: any = {}) => {
     let query = `
       SELECT j.*, u.full_name as poster_name, u.rating as poster_rating,
              array_agg(DISTINCT jt.tag) as tags,
@@ -236,7 +236,7 @@ const db = {
   },
 
   // M-Pesa transaction operations
-  createMpesaTransaction: async (transactionData) => {
+  createMpesaTransaction: async (transactionData: any) => {
     const { job_id, user_id, phone_number, amount, transaction_type, checkout_request_id } = transactionData;
     const result = await pool.query(
       `INSERT INTO mpesa_transactions (job_id, user_id, phone_number, amount, transaction_type, checkout_request_id)
@@ -246,7 +246,7 @@ const db = {
     return result.rows[0];
   },
 
-  updateMpesaTransaction: async (checkout_request_id, updateData) => {
+  updateMpesaTransaction: async (checkout_request_id: string, updateData: any) => {
     const { status, mpesa_receipt_number } = updateData;
     const result = await pool.query(
       `UPDATE mpesa_transactions 
@@ -258,4 +258,4 @@ const db = {
   }
 };
 
-module.exports = { pool, createTables, db };
+export { pool, createTables, db };

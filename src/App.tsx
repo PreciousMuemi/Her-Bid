@@ -9,10 +9,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Pages
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import NotFound from "./pages/NotFound";
-import Auth from './pages/Auth';
-import PostJob from './pages/PostJob';
-import SuiPage from './pages/SuiPage';
+import Auth from "./pages/Auth";
+import PostJob from "./pages/PostJob";
+import Demo from "./pages/Demo";
+import SuiPage from "./pages/SuiPage";
 import DeploymentGuidePage from './pages/DeploymentGuide';
 import Profile from './pages/Profile';
 import ContractDetails from './pages/ContractDetails';
@@ -70,10 +70,11 @@ const App = () => {
                 <Route path="opportunities" element={<Opportunities />} />
                 <Route path="contracts/:id" element={<ContractDetails />} />
                 <Route path="feedback" element={<Feedback />} />
+                <Route path="demo" element={<Demo />} />
               </Route>
 
               {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold mb-4">404 - Page Not Found</h1><p className="text-muted-foreground">The page you're looking for doesn't exist.</p></div></div>} />
             </Routes>
           </BrowserRouter>
         </SuiProvider>

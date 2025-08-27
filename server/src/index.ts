@@ -1,14 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import pino from 'pino';
-import paymentsRouter from './routes/payments.js';
-import matchmakingRouter from './routes/matchmaking.js';
-import { createTables } from './models/database.js';
-
-// Import new routes
-const mpesaRouter = require('./routes/mpesa.js');
-const jobsRouter = require('./routes/jobs.js');
+import mpesaRouter from './routes/mpesa.js';
+import jobsRouter from './routes/jobs.js';
+import escrowRouter from './routes/escrow.js';
 
 const app = express();
 const logger = pino({ transport: { target: 'pino-pretty' } });
@@ -16,14 +13,14 @@ const logger = pino({ transport: { target: 'pino-pretty' } });
 app.use(cors());
 app.use(express.json());
 
-// Initialize database tables
-createTables().catch(console.error);
+// Supabase is now used instead of local database
 
 app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
-app.use('/api/payments', paymentsRouter);
-app.use('/api/matchmaking', matchmakingRouter);
 app.use('/api/mpesa', mpesaRouter);
 app.use('/api/jobs', jobsRouter);
+app.use('/api/escrow', escrowRouter);
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => logger.info(`Gige-Bid server listening on :${port}`));
+app.listen(port, () => {
+  logger.info(`Gige-Bid server listening on :${port}`);
+});

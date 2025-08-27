@@ -1,0 +1,476 @@
+{
+  "users": [
+    {
+      "id": "user_001",
+      "name": "Mary Wanjiku",
+      "location": "Kibera, Nairobi",
+      "skills": [
+        "Egg Supply",
+        "Poultry Management",
+        "Local Distribution"
+      ],
+      "capacity": "3 schools/day",
+      "capacity_numeric": 3,
+      "reputation_score": 9.2,
+      "phone": "+254712345001",
+      "completed_projects": [
+        "Successfully delivered 2,000 eggs to St. Mary's Primary School",
+        "Supplied fresh eggs to 5 schools in Kibera for 3 months",
+        "Managed poultry distribution for community feeding program"
+      ],
+      "total_earnings": 45000,
+      "projects_completed": 12,
+      "specialization": "egg_supply"
+    },
+    {
+      "id": "user_002",
+      "name": "Grace Nyokabi",
+      "location": "Kibera, Nairobi",
+      "skills": [
+        "Egg Supply",
+        "Quality Control",
+        "Bulk Purchasing"
+      ],
+      "capacity": "4 schools/day",
+      "capacity_numeric": 4,
+      "reputation_score": 8.8,
+      "phone": "+254712345002",
+      "completed_projects": [
+        "Delivered 3,500 eggs to 8 schools in one week",
+        "Quality-checked egg supplies for government feeding program",
+        "Coordinated bulk egg purchases for 15 local vendors"
+      ],
+      "total_earnings": 38000,
+      "projects_completed": 9,
+      "specialization": "egg_supply"
+    },
+    {
+      "id": "user_003",
+      "name": "Sarah Muthoni",
+      "location": "Kibera, Nairobi",
+      "skills": [
+        "Egg Supply",
+        "Transportation",
+        "Customer Relations"
+      ],
+      "capacity": "2 schools/day",
+      "capacity_numeric": 2,
+      "reputation_score": 9,
+      "phone": "+254712345003",
+      "completed_projects": [
+        "Transported and delivered eggs to remote schools in Kibera",
+        "Maintained excellent customer relationships with 10+ schools",
+        "Never missed a delivery deadline in 8 months"
+      ],
+      "total_earnings": 32000,
+      "projects_completed": 8,
+      "specialization": "egg_supply"
+    },
+    {
+      "id": "user_004",
+      "name": "James Kiprotich",
+      "location": "Kibera, Nairobi",
+      "skills": [
+        "Logistics",
+        "Transportation",
+        "Route Optimization"
+      ],
+      "capacity": "15 schools/day",
+      "capacity_numeric": 15,
+      "reputation_score": 9.5,
+      "phone": "+254712345004",
+      "completed_projects": [
+        "Optimized delivery routes for 20+ schools saving 30% time",
+        "Coordinated logistics for large-scale food distribution",
+        "Managed transportation for 50+ successful deliveries"
+      ],
+      "total_earnings": 67000,
+      "projects_completed": 25,
+      "specialization": "logistics"
+    },
+    {
+      "id": "user_005",
+      "name": "Agnes Wambui",
+      "location": "Mathare, Nairobi",
+      "skills": [
+        "Egg Supply",
+        "Inventory Management",
+        "Quality Assurance"
+      ],
+      "capacity": "3 schools/day",
+      "capacity_numeric": 3,
+      "reputation_score": 8.5,
+      "phone": "+254712345005",
+      "completed_projects": [
+        "Managed egg inventory for 12 schools for 6 months",
+        "Implemented quality assurance checks reducing waste by 15%",
+        "Supplied eggs to schools in Mathare and surrounding areas"
+      ],
+      "total_earnings": 29000,
+      "projects_completed": 7,
+      "specialization": "egg_supply"
+    },
+    {
+      "id": "user_006",
+      "name": "Peter Ochieng",
+      "location": "Eastlands, Nairobi",
+      "skills": [
+        "Logistics",
+        "Fleet Management",
+        "Coordination"
+      ],
+      "capacity": "20 schools/day",
+      "capacity_numeric": 20,
+      "reputation_score": 8.9,
+      "phone": "+254712345006",
+      "completed_projects": [
+        "Managed fleet of 5 vehicles for school supply deliveries",
+        "Coordinated multi-location deliveries across Nairobi",
+        "Reduced delivery costs by 25% through route optimization"
+      ],
+      "total_earnings": 78000,
+      "projects_completed": 18,
+      "specialization": "logistics"
+    },
+    {
+      "id": "user_007",
+      "name": "Catherine Njeri",
+      "location": "Kawangware, Nairobi",
+      "skills": [
+        "Egg Supply",
+        "Community Relations",
+        "Bulk Sourcing"
+      ],
+      "capacity": "2 schools/day",
+      "capacity_numeric": 2,
+      "reputation_score": 9.1,
+      "phone": "+254712345007",
+      "completed_projects": [
+        "Built strong relationships with 15+ schools in Kawangware",
+        "Sourced high-quality eggs directly from farmers",
+        "Maintained 100% on-time delivery record for 10 months"
+      ],
+      "total_earnings": 35000,
+      "projects_completed": 11,
+      "specialization": "egg_supply"
+    },
+    {
+      "id": "user_008",
+      "name": "David Mutua",
+      "location": "Kibera, Nairobi",
+      "skills": [
+        "Quality Control",
+        "Documentation",
+        "Compliance"
+      ],
+      "capacity": "10 schools/day",
+      "capacity_numeric": 10,
+      "reputation_score": 9.3,
+      "phone": "+254712345008",
+      "completed_projects": [
+        "Ensured all deliveries met government food safety standards",
+        "Documented and tracked 200+ successful deliveries",
+        "Maintained compliance records for school feeding programs"
+      ],
+      "total_earnings": 42000,
+      "projects_completed": 15,
+      "specialization": "quality_control"
+    }
+  ],
+  "projects": [
+    {
+      "id": "project_001",
+      "title": "Egg Supply for 10 Schools",
+      "description": "Supply fresh eggs to 10 primary schools in Kibera area for school feeding program",
+      "location": "Kibera, Nairobi",
+      "total_capacity_needed": 10,
+      "budget": 50000,
+      "status": "open",
+      "funds_status": "pending",
+      "milestones": [
+        {
+          "id": 1,
+          "description": "Deliver to first 4 schools",
+          "percentage": 40,
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "description": "Deliver to next 3 schools",
+          "percentage": 30,
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "description": "Deliver to final 3 schools",
+          "percentage": 30,
+          "status": "pending"
+        }
+      ],
+      "created_at": "2025-08-27T20:00:00Z",
+      "deadline": "2025-08-30T17:00:00Z"
+    },
+    {
+      "id": "demo_project_001",
+      "title": "Egg Supply for 10 Schools",
+      "budget": 50000,
+      "status": "completed",
+      "funds_status": "fully_disbursed",
+      "team_members": [
+        {
+          "id": "user_001",
+          "name": "Mary Wanjiku",
+          "location": "Kibera, Nairobi",
+          "skills": [
+            "Egg Supply",
+            "Poultry Management",
+            "Local Distribution"
+          ],
+          "capacity": "3 schools/day",
+          "capacity_numeric": 3,
+          "reputation_score": 9.2,
+          "phone": "+254712345001",
+          "completed_projects": [
+            "Successfully delivered 2,000 eggs to St. Mary's Primary School",
+            "Supplied fresh eggs to 5 schools in Kibera for 3 months",
+            "Managed poultry distribution for community feeding program"
+          ],
+          "total_earnings": 45000,
+          "projects_completed": 12,
+          "specialization": "egg_supply",
+          "match_score": 82.8,
+          "role": "Primary Supplier",
+          "allocated_capacity": 3
+        },
+        {
+          "id": "user_002",
+          "name": "Grace Nyokabi",
+          "location": "Kibera, Nairobi",
+          "skills": [
+            "Egg Supply",
+            "Quality Control",
+            "Bulk Purchasing"
+          ],
+          "capacity": "4 schools/day",
+          "capacity_numeric": 4,
+          "reputation_score": 8.8,
+          "phone": "+254712345002",
+          "completed_projects": [
+            "Delivered 3,500 eggs to 8 schools in one week",
+            "Quality-checked egg supplies for government feeding program",
+            "Coordinated bulk egg purchases for 15 local vendors"
+          ],
+          "total_earnings": 38000,
+          "projects_completed": 9,
+          "specialization": "egg_supply",
+          "match_score": 81.7,
+          "role": "Primary Supplier",
+          "allocated_capacity": 4
+        },
+        {
+          "id": "user_003",
+          "name": "Sarah Muthoni",
+          "location": "Kibera, Nairobi",
+          "skills": [
+            "Egg Supply",
+            "Transportation",
+            "Customer Relations"
+          ],
+          "capacity": "2 schools/day",
+          "capacity_numeric": 2,
+          "reputation_score": 9,
+          "phone": "+254712345003",
+          "completed_projects": [
+            "Transported and delivered eggs to remote schools in Kibera",
+            "Maintained excellent customer relationships with 10+ schools",
+            "Never missed a delivery deadline in 8 months"
+          ],
+          "total_earnings": 32000,
+          "projects_completed": 8,
+          "specialization": "egg_supply",
+          "match_score": 77,
+          "role": "Primary Supplier",
+          "allocated_capacity": 2
+        },
+        {
+          "id": "user_007",
+          "name": "Catherine Njeri",
+          "location": "Kawangware, Nairobi",
+          "skills": [
+            "Egg Supply",
+            "Community Relations",
+            "Bulk Sourcing"
+          ],
+          "capacity": "2 schools/day",
+          "capacity_numeric": 2,
+          "reputation_score": 9.1,
+          "phone": "+254712345007",
+          "completed_projects": [
+            "Built strong relationships with 15+ schools in Kawangware",
+            "Sourced high-quality eggs directly from farmers",
+            "Maintained 100% on-time delivery record for 10 months"
+          ],
+          "total_earnings": 35000,
+          "projects_completed": 11,
+          "specialization": "egg_supply",
+          "match_score": 70.4,
+          "role": "Secondary Supplier",
+          "allocated_capacity": 1
+        }
+      ],
+      "milestones": [
+        {
+          "id": 1,
+          "description": "First delivery batch",
+          "percentage": 40,
+          "status": "completed",
+          "amount": 20000,
+          "completed_at": "2025-08-27T21:16:50.279Z",
+          "confirmed_by": "School Procurement Officer",
+          "payments": [
+            {
+              "user_id": "user_001",
+              "name": "Mary Wanjiku",
+              "amount": 5000,
+              "phone": "+254712345001",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294102790",
+              "sent_at": "2025-08-27T21:16:50.279Z"
+            },
+            {
+              "user_id": "user_002",
+              "name": "Grace Nyokabi",
+              "amount": 5000,
+              "phone": "+254712345002",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294102791",
+              "sent_at": "2025-08-27T21:16:50.279Z"
+            },
+            {
+              "user_id": "user_003",
+              "name": "Sarah Muthoni",
+              "amount": 5000,
+              "phone": "+254712345003",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294102792",
+              "sent_at": "2025-08-27T21:16:50.279Z"
+            },
+            {
+              "user_id": "user_004",
+              "name": "Catherine Njeri",
+              "amount": 5000,
+              "phone": "+254712345007",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294102793",
+              "sent_at": "2025-08-27T21:16:50.280Z"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "description": "Second delivery batch",
+          "percentage": 30,
+          "status": "completed",
+          "amount": 15000,
+          "completed_at": "2025-08-27T21:17:00.325Z",
+          "confirmed_by": "School Procurement Officer",
+          "payments": [
+            {
+              "user_id": "user_001",
+              "name": "Mary Wanjiku",
+              "amount": 3750,
+              "phone": "+254712345001",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294203250",
+              "sent_at": "2025-08-27T21:17:00.325Z"
+            },
+            {
+              "user_id": "user_002",
+              "name": "Grace Nyokabi",
+              "amount": 3750,
+              "phone": "+254712345002",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294203251",
+              "sent_at": "2025-08-27T21:17:00.325Z"
+            },
+            {
+              "user_id": "user_003",
+              "name": "Sarah Muthoni",
+              "amount": 3750,
+              "phone": "+254712345003",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294203252",
+              "sent_at": "2025-08-27T21:17:00.325Z"
+            },
+            {
+              "user_id": "user_004",
+              "name": "Catherine Njeri",
+              "amount": 3750,
+              "phone": "+254712345007",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294203253",
+              "sent_at": "2025-08-27T21:17:00.325Z"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "description": "Final delivery batch",
+          "percentage": 30,
+          "status": "completed",
+          "amount": 15000,
+          "completed_at": "2025-08-27T21:17:04.199Z",
+          "confirmed_by": "School Procurement Officer",
+          "payments": [
+            {
+              "user_id": "user_001",
+              "name": "Mary Wanjiku",
+              "amount": 3750,
+              "phone": "+254712345001",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294241990",
+              "sent_at": "2025-08-27T21:17:04.199Z"
+            },
+            {
+              "user_id": "user_002",
+              "name": "Grace Nyokabi",
+              "amount": 3750,
+              "phone": "+254712345002",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294241991",
+              "sent_at": "2025-08-27T21:17:04.199Z"
+            },
+            {
+              "user_id": "user_003",
+              "name": "Sarah Muthoni",
+              "amount": 3750,
+              "phone": "+254712345003",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294241992",
+              "sent_at": "2025-08-27T21:17:04.199Z"
+            },
+            {
+              "user_id": "user_004",
+              "name": "Catherine Njeri",
+              "amount": 3750,
+              "phone": "+254712345007",
+              "status": "sent_to_mpesa",
+              "transaction_id": "TXN17563294241993",
+              "sent_at": "2025-08-27T21:17:04.199Z"
+            }
+          ]
+        }
+      ],
+      "created_at": "2025-08-27T21:16:31.120Z",
+      "escrow_details": {
+        "checkout_request_id": "WS1756329391120u3tn1",
+        "mpesa_receipt_number": "MPE1756329391120",
+        "amount": 50000,
+        "phone_number": "+254712345000",
+        "secured_at": "2025-08-27T21:16:31.120Z",
+        "paybill_number": "522533",
+        "account_reference": "demo_project_001"
+      }
+    }
+  ]
+}

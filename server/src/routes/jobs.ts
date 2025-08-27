@@ -1,10 +1,10 @@
-const express = require('express');
-const { db } = require('../models/database');
+import express, { Request, Response } from 'express';
+import { db } from '../models/database.js';
 
 const router = express.Router();
 
 // Get all jobs with filters
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { category, search, status = 'open' } = req.query;
     
@@ -20,13 +20,13 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch jobs',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Get single job by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -72,13 +72,13 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch job',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Create new job
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       title,
@@ -124,13 +124,13 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create job',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Apply for a job
-router.post('/:id/apply', async (req, res) => {
+router.post('/:id/apply', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { applicant_id, proposal, proposed_budget } = req.body;
@@ -171,13 +171,13 @@ router.post('/:id/apply', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to submit application',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Get job applications
-router.get('/:id/applications', async (req, res) => {
+router.get('/:id/applications', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -198,13 +198,13 @@ router.get('/:id/applications', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch applications',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Get user's applications
-router.get('/user/:user_id/applications', async (req, res) => {
+router.get('/user/:user_id/applications', async (req: Request, res: Response) => {
   try {
     const { user_id } = req.params;
     
@@ -225,13 +225,13 @@ router.get('/user/:user_id/applications', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch applications',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 // Get user's posted jobs
-router.get('/user/:user_id/posted', async (req, res) => {
+router.get('/user/:user_id/posted', async (req: Request, res: Response) => {
   try {
     const { user_id } = req.params;
     
@@ -253,9 +253,9 @@ router.get('/user/:user_id/posted', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch posted jobs',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-module.exports = router;
+export default router;
