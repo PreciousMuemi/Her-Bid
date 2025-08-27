@@ -10,10 +10,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-// import CreateConsortium from './pages/Consortium';
-// import ManageEscrow from './pages/ManageEscrow';
-// import TokenManagement from './pages/TokenManagement';
-import AuthPage from './pages/Auth';
+import Auth from './pages/Auth';
+import PostJob from './pages/PostJob';
+import SuiPage from './pages/SuiPage';
 import DeploymentGuidePage from './pages/DeploymentGuide';
 import Profile from './pages/Profile';
 import ContractDetails from './pages/ContractDetails';
@@ -53,12 +52,14 @@ const App = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth" element={<Auth />} />
               
               {/* Routes that need layout */}
               <Route path="/" element={<AppLayout />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="agi-showcase" element={<AGIShowcase />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/post-job" element={<PostJob />} />
+                <Route path="/sui" element={<SuiPage />} />
                 <Route path="issuer-dashboard" element={<IssuerDashboard />} />
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="profile" element={<Profile />} />

@@ -9,37 +9,37 @@ const Hero = () => {
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-6 items-center">
           <div className="lg:w-1/2 space-y-6 animate-fade-in">
             <div className="inline-block rounded-full bg-secondary/10 px-3 py-1 text-sm text-secondary animate-slide-in-left">
-              Empowering Collaborative Businesses
+              🚀 Africa's Gig Marketplace
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-              Collective Procurement Access Platform
+              Find work. Post jobs. Get paid.
             </h1>
             <p className="text-xl text-muted-foreground max-w-xl animate-slide-in-left animate-delay-100">
-              Transform how businesses access large contracts through collective bidding,
-              secure payments, and validated skills.
+              Connect with opportunities across Kenya. From tech to trades, catering to construction - 
+              secure payments guaranteed.
             </p>
             
             <div className="flex flex-wrap gap-3 pt-2 animate-slide-in-left animate-delay-200">
               <CustomButton variant="default" size="lg">
-                Get Started
+                Join Marketplace
               </CustomButton>
               <CustomButton variant="outline" size="lg">
-                Learn More
+                Post a Job
               </CustomButton>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-slide-in-left animate-delay-300">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={20} className="text-secondary" />
-                <span className="text-sm">Verified Consortiums</span>
+                <span className="text-sm">Verified Teams</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={20} className="text-secondary" />
-                <span className="text-sm">Secure Payments</span>
+                <span className="text-sm">Secure M-Pesa Payments</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={20} className="text-secondary" />
-                <span className="text-sm">Blind Skill Validation</span>
+                <span className="text-sm">All Skills Welcome</span>
               </div>
             </div>
           </div>

@@ -1,640 +1,266 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useSui } from "@/hooks/useSui";
-import { useThemeStore } from "@/store/themeStore";
-import { toast } from "sonner";
-import { Wallet, Shield, UserRoundPlus, Loader2, Building, Briefcase } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
 
 enum AuthMode {
   LOGIN = "login",
   SIGNUP = "signup"
 }
 
-enum UserType {
-  ENTREPRENEUR = "entrepreneur",
-  ISSUER = "issuer",
-  BOTH = "both"
-}
-
-enum WalletType {
-  METAMASK = "metamask",
-  HASHPACK = "hashpack",
-  BLADE = "blade"
-}
-
-const AuthPage: React.FC = () => {
+const Auth: React.FC = () => {
   const navigate = useNavigate();
-  const { theme } = useThemeStore();
-  const { connectWallet } = useSui();
-  
   const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.LOGIN);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [walletError, setWalletError] = useState<string | null>(null);
-  const [userType, setUserType] = useState<UserType>(UserType.ENTREPRENEUR);
-  
-  // Form data for signup
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Form data
   const [formData, setFormData] = useState({
-    businessName: "",
     email: "",
-    industry: "",
-    skills: "",
-    userType: UserType.ENTREPRENEUR,
-    gender: "female"
+    password: "",
+    fullName: "",
+    phone: "",
+    location: "",
+    skills: ""
   });
 
-  // Check if already authenticated
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-    if (isAuthenticated) {
-      const userProfile = localStorage.getItem("userProfile");
-      if (userProfile) {
-        try {
-          const profile = JSON.parse(userProfile);
-          if (profile.userType === UserType.ISSUER) {
-            navigate("/issuer-dashboard");
-          } else {
-            navigate("/dashboard");
-          }
-        } catch (e) {
-          console.error("Error parsing user profile", e);
-          navigate("/dashboard");
-        }
-      } else {
-        navigate("/dashboard");
-      }
-    }
-  }, [navigate]);
-
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle industry selection
-  const handleIndustryChange = (value: string) => {
-    setFormData({
-      ...formData,
-      industry: value
-    });
-  };
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  // Handle user type selection
-  const handleUserTypeChange = (value: UserType) => {
-    setFormData({
-      ...formData,
-      userType: value
-    });
-    setUserType(value);
-  };
-
-  // Handle gender selection
-  const handleGenderChange = (value: string) => {
-    setFormData({
-      ...formData,
-      gender: value
-    });
-  };
-
-  // Connect to Sui wallet
-  const handleSuiWalletConnect = async () => {
     try {
-      console.log("Starting Sui wallet connection...");
-      setIsConnecting(true);
-      
-      // Use the Sui context to connect wallet
-      await connectWallet();
-      
-      // Mock address for now until proper wallet integration
-      const mockAddress = "0x1234567890abcdef";
-      
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("walletAddress", mockAddress);
-      
-      if (authMode === AuthMode.SIGNUP) {
-        const now = new Date().toISOString();
-        const fullProfile = {
-          ...formData,
-          walletAddress: mockAddress,
-          createdAt: now,
-          lastLogin: now,
-          completedProfile: true
-        };
-        
-        localStorage.setItem("userProfile", JSON.stringify(fullProfile));
-        toast.success("Profile created successfully!");
-      } else {
-        // For login, check if we have profile data
-        const existingProfile = localStorage.getItem("userProfile");
-        if (existingProfile) {
-          const profile = JSON.parse(existingProfile);
-          profile.lastLogin = new Date().toISOString();
-          localStorage.setItem("userProfile", JSON.stringify(profile));
-        } else {
-          // Create minimal profile for returning users
-          const basicProfile = {
-            walletAddress: mockAddress,
-            lastLogin: new Date().toISOString(),
-            completedProfile: false,
-            userType: UserType.ENTREPRENEUR
-          };
-          localStorage.setItem("userProfile", JSON.stringify(basicProfile));
-        }
-      }
-      
-      setIsConnecting(false);
-      toast.success("Connected to Sui wallet successfully!");
-      
-      // Redirect based on user type
-      const userProfile = localStorage.getItem("userProfile");
-      if (userProfile) {
-        const profile = JSON.parse(userProfile);
-        if (profile.userType === UserType.ISSUER) {
-          navigate("/issuer-dashboard");
-        } else {
-          navigate("/dashboard");
-        }
-      } else {
+      // Simulate login - replace with actual API call
+      setTimeout(() => {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userProfile", JSON.stringify({
+          email: formData.email,
+          fullName: formData.fullName || "User"
+        }));
+        setIsLoading(false);
         navigate("/dashboard");
-      }
-    } catch (error: any) {
-      console.error("Sui wallet connection error:", error);
-      toast.error(error.message || "Connection failed");
-      setIsConnecting(false);
+      }, 1000);
+    } catch (error) {
+      console.error("Login error:", error);
+      setIsLoading(false);
     }
   };
-  
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-6xl">
-      <div className="text-center mb-10">
-        <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
-          theme === 'dark' 
-            ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
-            : 'text-gray-900'
-        }`}>
-          Join the Gige-Bid Network
-        </h1>
-        <p className={`text-lg max-w-3xl mx-auto ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-          Connect your wallet to access the platform designed for businesses and contract issuers.
-        </p>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-        <div className={`p-6 md:p-10 rounded-xl ${
-          theme === 'dark' 
-            ? 'bg-[#0A155A]/70 border border-[#303974]' 
-            : 'bg-white border border-gray-200'
-        } shadow-lg`}>
-          <Tabs defaultValue={authMode} onValueChange={(v) => setAuthMode(v as AuthMode)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value={AuthMode.LOGIN}>Login</TabsTrigger>
-              <TabsTrigger value={AuthMode.SIGNUP}>Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={AuthMode.LOGIN}>
-              <CardHeader className="px-0">
-                <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : ''}`}>
-                  Welcome Back!
-                </CardTitle>
-                <CardDescription className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
-                  Connect your wallet to access your Gige-Bid account
-                </CardDescription>
-              </CardHeader>
-            </TabsContent>
-            
-            <TabsContent value={AuthMode.SIGNUP}>
-              <CardHeader className="px-0">
-                <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : ''}`}>
-                  Create Your Profile
-                </CardTitle>
-                <CardDescription className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
-                  Tell us about yourself to get started
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="px-0 space-y-4">
-                <div className="space-y-2">
-                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
-                    I am a:
-                  </Label>
-                  <RadioGroup 
-                    defaultValue={UserType.ENTREPRENEUR}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                    onValueChange={(v) => handleUserTypeChange(v as UserType)}
-                  >
-                    <div className={`flex items-center space-x-2 border rounded-md p-3 ${
-                      userType === UserType.ENTREPRENEUR ? 
-                        theme === 'dark' ? 'border-purple-500 bg-[#182052]' : 'border-primary bg-primary/5' :
-                        theme === 'dark' ? 'border-[#303974]' : 'border-gray-200'
-                    }`}>
-                      <RadioGroupItem value={UserType.ENTREPRENEUR} id="entrepreneur" />
-                      <Label htmlFor="entrepreneur" className="flex items-center cursor-pointer">
-                        <Building className="h-4 w-4 mr-2" />
-                        Entrepreneur
-                      </Label>
-                    </div>
-                    
-                    <div className={`flex items-center space-x-2 border rounded-md p-3 ${
-                      userType === UserType.ISSUER ? 
-                        theme === 'dark' ? 'border-purple-500 bg-[#182052]' : 'border-primary bg-primary/5' :
-                        theme === 'dark' ? 'border-[#303974]' : 'border-gray-200'
-                    }`}>
-                      <RadioGroupItem value={UserType.ISSUER} id="issuer" />
-                      <Label htmlFor="issuer" className="flex items-center cursor-pointer">
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        Contract Issuer
-                      </Label>
-                    </div>
-                    
-                    <div className={`flex items-center space-x-2 border rounded-md p-3 ${
-                      userType === UserType.BOTH ? 
-                        theme === 'dark' ? 'border-purple-500 bg-[#182052]' : 'border-primary bg-primary/5' :
-                        theme === 'dark' ? 'border-[#303974]' : 'border-gray-200'
-                    }`}>
-                      <RadioGroupItem value={UserType.BOTH} id="both" />
-                      <Label htmlFor="both" className="flex items-center cursor-pointer">
-                        Both
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                
-                {(userType === UserType.ENTREPRENEUR || userType === UserType.BOTH) && (
-                  <>
-                    <div className="space-y-2">
-                      <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
-                        Gender:
-                      </Label>
-                      <RadioGroup 
-                        defaultValue="female"
-                        className="flex space-x-4"
-                        onValueChange={handleGenderChange}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="female" id="female" />
-                          <Label htmlFor="female">Female</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="male" id="male" />
-                          <Label htmlFor="male">Male</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="other" id="other" />
-                          <Label htmlFor="other">Other</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  
-                    <div className="space-y-2">
-                      <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="businessName">
-                        Business Name
-                      </Label>
-                      <Input
-                        id="businessName"
-                        name="businessName"
-                        value={formData.businessName}
-                        onChange={handleInputChange}
-                        placeholder="Your Business Name"
-                        className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                <div className="space-y-2">
-                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="email">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="you@example.com"
-                    className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="industry">
-                    Industry
-                  </Label>
-                  <Select value={formData.industry} onValueChange={handleIndustryChange}>
-                    <SelectTrigger className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}>
-                      <SelectValue placeholder="Select an industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="government">Government</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="consulting">Consulting</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {(userType === UserType.ENTREPRENEUR || userType === UserType.BOTH) && (
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Simulate signup - replace with actual API call
+      setTimeout(() => {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userProfile", JSON.stringify(formData));
+        setIsLoading(false);
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error) {
+      console.error("Signup error:", error);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Welcome to Gige-Bid
+          </h1>
+          <p className="text-muted-foreground">
+            {authMode === AuthMode.LOGIN
+              ? "Sign in to your account"
+              : "Create your account to get started"
+            }
+          </p>
+        </div>
+
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="space-y-1">
+            <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as AuthMode)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value={AuthMode.LOGIN}>Sign In</TabsTrigger>
+                <TabsTrigger value={AuthMode.SIGNUP}>Sign Up</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <Tabs value={authMode}>
+              <TabsContent value={AuthMode.LOGIN} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label className={theme === 'dark' ? 'text-[#B2B9E1]' : ''} htmlFor="skills">
-                      Skills & Expertise
-                    </Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="skills"
-                      name="skills"
-                      value={formData.skills}
-                      onChange={handleInputChange}
-                      placeholder="Web Development, Design, Project Management, etc."
-                      className={theme === 'dark' ? 'bg-[#0A155A]/50 border-[#303974] text-white' : ''}
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      required
                     />
                   </div>
-                )}
-              </CardContent>
-            </TabsContent>
-            
-            <div className="space-y-4 mt-6">
-              <div className={`p-4 rounded-lg ${
-                theme === 'dark' ? 'bg-[#0A155A]/30 border border-[#303974]' : 'bg-gray-50 border border-gray-100'
-              }`}>
-                <h3 className={`font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>
-                  Connect Your Wallet
-                </h3>
-                
-                <Button
-                  className="w-full justify-start mb-2"
-                  variant={theme === 'dark' ? "outline" : "secondary"}
-                  onClick={() => handleSuiWalletConnect()}
-                  disabled={isConnecting || (authMode === AuthMode.SIGNUP && !formData.email)}
-                >
-                  {isConnecting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Wallet className="h-4 w-4 mr-2" />
-                  )}
-                  Connect Sui Wallet
-                </Button>
-                
-                <Button 
-                  className="w-full justify-start mb-2" 
-                  variant="outline" 
-                  disabled={true}
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Sui Wallet (Coming Soon)
-                </Button>
-                
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline" 
-                  disabled={true}
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Ethos Wallet (Coming Soon)
-                </Button>
-                
-                {walletError && (
-                  <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-                    {walletError}
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      required
+                    />
                   </div>
-                )}
-              </div>
-            </div>
-          </Tabs>
-        </div>
-        
-        <div className="hidden lg:block">
-          <div className={`rounded-xl p-8 ${
-            theme === 'dark' 
-              ? 'bg-gradient-to-br from-[#0A155A]/90 to-[#16216e]/90 backdrop-blur-sm border-[#303974] border' 
-              : 'bg-blue-50'
-          }`}>
-            <Tabs defaultValue="entrepreneurs" className="w-full">
-              <TabsList className="w-full mb-6">
-                <TabsTrigger value="entrepreneurs">For Entrepreneurs</TabsTrigger>
-                <TabsTrigger value="issuers">For Contract Issuers</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="entrepreneurs">
-                <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Why Join Gige-Bid?
-                </h2>
-                
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>01</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Profile Creation
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Set up your business profile highlighting your skills and capacity.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>02</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Contract Matching
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Get recommended opportunities with a "Match Score" based on your expertise.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-blue-800' : 'bg-blue-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-blue-200' : 'text-blue-700'}>03</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Partner Matching
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Find other entrepreneurs with complementary skills.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>04</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Secure Collaboration
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Form legal consortiums with clear payment terms.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>05</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Protected Payments
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Client funds are secured in escrow and released at milestones.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-blue-800' : 'bg-blue-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-blue-200' : 'text-blue-700'}>06</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Reputation Building
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Every successful project builds your business credibility.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Sign In
+                      </>
+                    )}
+                  </Button>
+                </form>
               </TabsContent>
-              
-              <TabsContent value="issuers">
-                <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  For Contract Issuers
-                </h2>
-                
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>01</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Post Requirements
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Specify needed skills and project details.
-                      </p>
-                    </div>
+
+              <TabsContent value={AuthMode.SIGNUP} className="space-y-4">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange("fullName", e.target.value)}
+                      required
+                    />
                   </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>02</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Access Diverse Teams
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Get proposals from qualified women-owned business consortiums.
-                      </p>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      required
+                    />
                   </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-blue-800' : 'bg-blue-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-blue-200' : 'text-blue-700'}>03</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Transparent Process
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        See verified credentials and past performance.
-                      </p>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Create a password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      required
+                    />
                   </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-purple-800' : 'bg-purple-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-purple-200' : 'text-purple-700'}>04</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Milestone Management
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Release payments as work is completed.
-                      </p>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                    />
                   </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-pink-800' : 'bg-pink-100'
-                    }`}>
-                      <span className={theme === 'dark' ? 'text-pink-200' : 'text-pink-700'}>05</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Support Diversity
-                      </h3>
-                      <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Meet supplier diversity goals with verified women-owned businesses.
-                      </p>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      type="text"
+                      placeholder="Enter your location"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange("location", e.target.value)}
+                    />
                   </div>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="skills">Skills</Label>
+                    <Input
+                      id="skills"
+                      type="text"
+                      placeholder="Enter your skills (comma separated)"
+                      value={formData.skills}
+                      onChange={(e) => handleInputChange("skills", e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      <>
+                        <User className="mr-2 h-4 w-4" />
+                        Create Account
+                      </>
+                    )}
+                  </Button>
+                </form>
               </TabsContent>
             </Tabs>
-          </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  // Google OAuth placeholder
+                  console.log("Google OAuth not implemented yet");
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Continue with Google
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center text-sm text-muted-foreground">
+          <p>
+            By continuing, you agree to our{" "}
+            <a href="#" className="underline underline-offset-4 hover:text-primary">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="#" className="underline underline-offset-4 hover:text-primary">
+              Privacy Policy
+            </a>
+          </p>
         </div>
-      </div>
-      
-      <div className="mt-10 text-center">
-        <a href="mailto:support@gigebid.com" className={`text-sm ${
-          theme === 'dark' ? 'text-[#8891C5] hover:text-white' : 'text-gray-500 hover:text-gray-700'
-        }`}>
-          Need help? Contact our support team
-        </a>
       </div>
     </div>
   );
 };
 
-export default AuthPage;
+export default Auth;
