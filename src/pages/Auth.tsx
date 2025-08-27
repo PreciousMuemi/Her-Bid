@@ -183,10 +183,10 @@ const AuthPage: React.FC = () => {
             ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
             : 'text-gray-900'
         }`}>
-          Join the HerBid Network
+          Join the Gige-Bid Network
         </h1>
         <p className={`text-lg max-w-3xl mx-auto ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-          Connect your wallet to access the platform designed for women-led businesses and contract issuers.
+          Connect your wallet to access the platform designed for businesses and contract issuers.
         </p>
       </div>
 
@@ -208,7 +208,7 @@ const AuthPage: React.FC = () => {
                   Welcome Back!
                 </CardTitle>
                 <CardDescription className={theme === 'dark' ? 'text-[#B2B9E1]' : ''}>
-                  Connect your wallet to access your HerBid account
+                  Connect your wallet to access your Gige-Bid account
                 </CardDescription>
               </CardHeader>
             </TabsContent>
@@ -426,13 +426,13 @@ const AuthPage: React.FC = () => {
           }`}>
             <Tabs defaultValue="entrepreneurs" className="w-full">
               <TabsList className="w-full mb-6">
-                <TabsTrigger value="entrepreneurs">For Women Entrepreneurs</TabsTrigger>
+                <TabsTrigger value="entrepreneurs">For Entrepreneurs</TabsTrigger>
                 <TabsTrigger value="issuers">For Contract Issuers</TabsTrigger>
               </TabsList>
               
               <TabsContent value="entrepreneurs">
                 <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Why Join HerBid?
+                  Why Join Gige-Bid?
                 </h2>
                 
                 <div className="space-y-6">
@@ -479,7 +479,7 @@ const AuthPage: React.FC = () => {
                         Partner Matching
                       </h3>
                       <p className={theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}>
-                        Find other women entrepreneurs with complementary skills.
+                        Find other entrepreneurs with complementary skills.
                       </p>
                     </div>
                   </div>
@@ -627,7 +627,7 @@ const AuthPage: React.FC = () => {
       </div>
       
       <div className="mt-10 text-center">
-        <a href="mailto:support@herbid.com" className={`text-sm ${
+        <a href="mailto:support@gigebid.com" className={`text-sm ${
           theme === 'dark' ? 'text-[#8891C5] hover:text-white' : 'text-gray-500 hover:text-gray-700'
         }`}>
           Need help? Contact our support team

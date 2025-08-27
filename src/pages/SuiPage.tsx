@@ -98,7 +98,7 @@ const SuiPage = () => {
             ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' 
             : 'text-primary'
         }`}>
-          Sui Integration for HerBid ✨
+          Sui Integration for Gige-Bid ✨
         </h1>
         
         <div className="grid md:grid-cols-3 gap-8">
@@ -351,16 +351,16 @@ const SuiPage = () => {
               : 'bg-white shadow-md border border-gray-100'
           }`}>
             <CardHeader>
-              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Sui Integration for HerBid</CardTitle>
+              <CardTitle className={`${isDark ? 'text-white' : ''}`}>Sui Integration for Gige-Bid</CardTitle>
               <CardDescription className={`${isDark ? 'text-[#B2B9E1]' : ''}`}>
-                How HerBid utilizes Sui blockchain technology
+                How Gige-Bid utilizes Sui blockchain technology
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : ''}`}>
-                    Benefits for HerBid Platform
+                    Benefits for Gige-Bid Platform
                   </h3>
                   <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
                     <li>Secure and transparent bidding with immutable records</li>
@@ -372,7 +372,7 @@ const SuiPage = () => {
                 </div>
                 <div>
                   <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : ''}`}>
-                    Why Sui for HerBid
+                    Why Sui for Gige-Bid
                   </h3>
                   <ul className={`list-disc pl-5 space-y-2 ${isDark ? 'text-[#B2B9E1]' : 'text-gray-700'}`}>
                     <li>Parallel execution for high-throughput bidding</li>

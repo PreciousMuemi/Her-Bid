@@ -133,7 +133,7 @@ const Dashboard = () => {
     return (
       <div className="max-w-md mx-auto py-8">
         <h1 className={`text-2xl font-bold text-center mb-6 ${theme === 'dark' ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>
-          Welcome to HerBid ✨
+          Welcome to Gige-Bid ✨
         </h1>
         <WalletConnectGuide onComplete={handleWalletConnectComplete} />
       </div>
@@ -150,7 +150,7 @@ const Dashboard = () => {
               Connect Your Wallet
             </h1>
             <p className={`text-lg mb-10 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
-              Connect your wallet to access HerBid and start collaborating with other women-led businesses.
+              Connect your wallet to access Gige-Bid and start collaborating with other businesses.
             </p>
             <CustomButton 
               size="lg"
@@ -183,7 +183,7 @@ const Dashboard = () => {
           theme === 'dark' ? 'bg-[#0A155A]/70 border border-[#303974]' : 'bg-white border border-gray-200'
         }`}>
           <h1 className={`text-2xl md:text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Welcome to HerBid!
+            Welcome to Gige-Bid!
           </h1>
           <p className={`mb-6 ${theme === 'dark' ? 'text-[#B2B9E1]' : 'text-gray-600'}`}>
             Let's set up your business profile to help you find the perfect contracts and partners.
