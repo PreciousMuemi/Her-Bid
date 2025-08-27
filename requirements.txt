@@ -1,0 +1,25 @@
+# HerBid Backend Requirements
+# Python dependencies for the AGI-Sui integration backend
+
+# Core web framework
+Flask==2.3.2
+Flask-CORS==4.0.0
+
+# MeTTa symbolic reasoning (install when available)
+# metta-py==0.1.0  # Uncomment when MeTTa Python bindings are available
+
+# Sui blockchain integration (install when available)
+# pysui==0.1.0  # Uncomment when Sui Python SDK is available
+
+# Data handling and utilities
+requests==2.31.0
+python-dotenv==1.0.0
+
+# Development dependencies
+pytest==7.4.0
+black==23.7.0
+flake8==6.0.0
+
+# Optional: Database support for production
+# SQLAlchemy==2.0.19
+# psycopg2-binary==2.9.7  # For PostgreSQL

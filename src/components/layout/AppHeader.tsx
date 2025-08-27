@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bell, ChevronDown } from 'lucide-react';
-import { useSui } from '@/hooks/useSui';
+import { useSui } from '@/contexts/SuiContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -20,13 +20,14 @@ import { toast } from 'sonner';
 const AppHeader = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
+  const { isConnected, account } = useSui();
   
   const [username, setUsername] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [notificationCount, setNotificationCount] = useState(3);
   
   // Load user profile if available
-  useState(() => {
+  useEffect(() => {
     const userProfile = localStorage.getItem("userProfile");
     if (userProfile) {
       try {
@@ -43,7 +44,7 @@ const AppHeader = () => {
     } else {
       setUsername('User');
     }
-  });
+  }, []);
   
   const handleLogout = () => {
    
@@ -60,7 +61,7 @@ const AppHeader = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">
-            <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>Her</span>
+            <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>Gige</span>
             <span className={theme === 'dark' ? 'text-primary bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 text-transparent' : 'text-primary'}>Bid</span>
           </h1>
         </div>
@@ -95,10 +96,10 @@ const AppHeader = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              {accountId && (
+              {account?.address && (
                 <div className="px-2 py-1">
                   <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                    {accountId}
+                    {account.address}
                   </p>
                 </div>
               )}

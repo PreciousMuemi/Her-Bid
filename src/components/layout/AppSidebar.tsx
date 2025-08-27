@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useThemeStore } from '@/store/themeStore';
-import { ChevronLeft, ChevronRight, Home, Globe, Briefcase, UserRoundCog, Users, Coins, ShieldCheck, MessageSquareText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Globe, Briefcase, UserRoundCog, Users, Coins, ShieldCheck, MessageSquareText, Brain } from 'lucide-react';
 
 const AppSidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> = ({
   isSidebarOpen,
@@ -19,6 +19,11 @@ const AppSidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }
       label: 'Dashboard',
       icon: <Home size={20} />,
       path: '/dashboard',
+    },
+    {
+      label: 'AGI Showcase',
+      icon: <Brain size={20} />,
+      path: '/agi-showcase',
     },
     {
       label: 'Opportunities',

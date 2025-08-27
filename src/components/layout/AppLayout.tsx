@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useSui } from "@/hooks/useSui";
+import { useSui } from "@/contexts/SuiContext";
 import AppSidebar from './AppSidebar';
 import AppHeader from './AppHeader';
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const { isConnected } = useSui();
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   

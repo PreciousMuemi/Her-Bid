@@ -1,5 +1,5 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "gige-bid-platform",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,12 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend:setup": "chmod +x setup_backend.sh && ./setup_backend.sh",
+    "backend:dev": "./start_backend.sh",
+    "backend:install": "pip install -r requirements.txt",
+    "dev:full": "concurrently \"npm run dev\" \"npm run backend:dev\" --names \"Frontend,Backend\" --prefix-colors \"cyan,magenta\"",
+    "test:backend": "curl http://localhost:5000/api/health"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -78,6 +83,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-react-swc": "^3.8.1",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
