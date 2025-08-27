@@ -14,7 +14,7 @@ const AGIShowcase: React.FC = () => {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Brain className="h-12 w-12 text-blue-600" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              HerBid AGI Engine
+              GigeBid AGI Engine
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">

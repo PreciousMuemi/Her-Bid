@@ -1,5 +1,5 @@
 """
-HerBid Backend API
+GigeBid Backend API
 Main backend service that integrates AGI reasoning with Sui blockchain operations.
 This serves as the bridge between the React frontend and the backend services.
 """
@@ -23,8 +23,8 @@ class APIResponse:
     message: str = ""
     error: str = ""
 
-class HerBidBackendAPI:
-    """Main backend API service for HerBid platform"""
+class GigeBidBackendAPI:
+    """Main backend API service for GigeBid platform"""
     
     def __init__(self):
         """Initialize the backend services"""
@@ -32,13 +32,13 @@ class HerBidBackendAPI:
         CORS(self.app)  # Enable CORS for frontend communication
         
         # Initialize core services
-        self.agi_engine = AGI_HerBid_Engine()
+        self.agi_engine = AGI_GigeBid_Engine()
         self.sui_connector = SuiConnector("devnet")
         
         # Setup API routes
         self._setup_routes()
         
-        print("HerBid Backend API initialized successfully")
+        print("GigeBid Backend API initialized successfully")
     
     def _setup_routes(self):
         """Setup all API routes"""
@@ -49,7 +49,7 @@ class HerBidBackendAPI:
             return jsonify(asdict(APIResponse(
                 success=True,
                 data={"status": "healthy", "timestamp": time.time()},
-                message="HerBid Backend API is running"
+                message="GigeBid Backend API is running"
             )))
         
         @self.app.route('/api/partnerships/find', methods=['POST'])
@@ -416,18 +416,18 @@ class HerBidBackendAPI:
     
     def run(self, host='localhost', port=5000, debug=True):
         """Run the Flask application"""
-        print(f"Starting HerBid Backend API on {host}:{port}")
+        print(f"Starting GigeBid Backend API on {host}:{port}")
         self.app.run(host=host, port=port, debug=debug)
 
 # Factory function for creating the API instance
-def create_herbid_api():
-    """Factory function to create HerBid API instance"""
-    return HerBidBackendAPI()
+def create_gigebid_api():
+    """Factory function to create GigeBid API instance"""
+    return GigeBidBackendAPI()
 
 # Example usage and testing
 if __name__ == "__main__":
     # Create and run the API
-    api = create_herbid_api()
+    api = create_gigebid_api()
     
     # Run the development server
     api.run(host='0.0.0.0', port=5000, debug=True)

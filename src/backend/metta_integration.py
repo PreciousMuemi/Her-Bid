@@ -32,10 +32,10 @@ class TeamFormation:
     skill_coverage: Dict[str, str]  # skill -> business mapping
     collaborative_bonuses: List[str]
 
-class AGI_HerBid_Engine:
+class AGI_GigeBid_Engine:
     """
-    The core AGI engine that interfaces with MeTTa knowledge graph
-    to provide intelligent business partnership recommendations.
+    Advanced AGI engine for GigeBid platform that combines symbolic reasoning 
+    with practical partnership recommendations for gig economy professionals.
     """
     
     def __init__(self):

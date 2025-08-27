@@ -1,5 +1,6 @@
-; HerBid AGI Knowledge Graph
-; This file contains the formal logic for business partnership recommendations
+; GigeBid AGI Knowledge Graph
+; Enhanced formal logic for business partnership recommendations
+; Includes complementary skill matching, geographical analysis, and reputation tracking
 
 ; Define the basic types of entities in our system
 (:- (type-of Business) "entity")
@@ -8,27 +9,58 @@
 (:- (type-of Reputation) "metric")
 (:- (type-of Location) "attribute")
 (:- (type-of Industry) "category")
+(:- (type-of HistoricalCollaboration) "record")
+(:- (type-of GeographicalCluster) "spatial")
 
-; Sample businesses with their skills and locations
+; Sample businesses with their skills and locations - Updated to be gender-neutral
 (has-skill "Sarah's Marketing Agency" "Digital Marketing")
 (has-skill "Sarah's Marketing Agency" "Content Creation")
 (has-skill "Sarah's Marketing Agency" "Social Media Management")
 (is-located-in "Sarah's Marketing Agency" "Nairobi")
 (has-industry "Sarah's Marketing Agency" "Marketing")
+(has-reputation "Sarah's Marketing Agency" 85)
 
-(has-skill "Jane's Dev House" "Web Development")
-(has-skill "Jane's Dev House" "Sui Smart Contracts")
-(has-skill "Jane's Dev House" "Frontend Development")
-(is-located-in "Jane's Dev House" "Nairobi")
-(has-industry "Jane's Dev House" "Technology")
+(has-skill "Jordan's Dev House" "Web Development")
+(has-skill "Jordan's Dev House" "Sui Smart Contracts")
+(has-skill "Jordan's Dev House" "Frontend Development")
+(is-located-in "Jordan's Dev House" "Nairobi")
+(has-industry "Jordan's Dev House" "Technology")
+(has-reputation "Jordan's Dev House" 92)
 
 (has-skill "Tech Solutions Kenya" "Mobile App Development")
 (has-skill "Tech Solutions Kenya" "Backend Development")
 (has-skill "Tech Solutions Kenya" "DevOps")
 (is-located-in "Tech Solutions Kenya" "Mombasa")
 (has-industry "Tech Solutions Kenya" "Technology")
+(has-reputation "Tech Solutions Kenya" 88)
 
 (has-skill "Creative Minds Studio" "Graphic Design")
+(has-skill "Creative Minds Studio" "UI/UX Design")
+(has-skill "Creative Minds Studio" "Branding")
+(is-located-in "Creative Minds Studio" "Nairobi")
+(has-industry "Creative Minds Studio" "Design")
+(has-reputation "Creative Minds Studio" 90)
+
+(has-skill "Financial Consultants Ltd" "Financial Analysis")
+(has-skill "Financial Consultants Ltd" "Business Strategy")
+(has-skill "Financial Consultants Ltd" "Risk Management")
+(is-located-in "Financial Consultants Ltd" "Nairobi")
+(has-industry "Financial Consultants Ltd" "Finance")
+(has-reputation "Financial Consultants Ltd" 91)
+
+(has-skill "DataFlow Analytics" "Data Science")
+(has-skill "DataFlow Analytics" "Machine Learning")
+(has-skill "DataFlow Analytics" "Business Intelligence")
+(is-located-in "DataFlow Analytics" "Kisumu")
+(has-industry "DataFlow Analytics" "Technology")
+(has-reputation "DataFlow Analytics" 87)
+
+; Historical collaboration records with success metrics
+(collaboration-history "Sarah's Marketing Agency" "Jordan's Dev House" "Government Tender #122" 95 "2024-12-15")
+(collaboration-history "Jordan's Dev House" "Creative Minds Studio" "E-commerce Platform" 88 "2024-11-20")
+(collaboration-history "Tech Solutions Kenya" "Financial Consultants Ltd" "Mobile Banking App" 92 "2024-10-10")
+(collaboration-history "Sarah's Marketing Agency" "Creative Minds Studio" "Brand Campaign" 90 "2024-09-05")
+(collaboration-history "DataFlow Analytics" "Tech Solutions Kenya" "Analytics Dashboard" 89 "2024-08-15")
 (has-skill "Creative Minds Studio" "UI/UX Design")
 (has-skill "Creative Minds Studio" "Branding")
 (is-located-in "Creative Minds Studio" "Nairobi")

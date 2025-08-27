@@ -9,13 +9,13 @@ const Hero = () => {
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-6 items-center">
           <div className="lg:w-1/2 space-y-6 animate-fade-in">
             <div className="inline-block rounded-full bg-secondary/10 px-3 py-1 text-sm text-secondary animate-slide-in-left">
-              Empowering Women-Led Businesses
+              Empowering Leader-Owned Businesses
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
               Collective Procurement Access Platform
             </h1>
             <p className="text-xl text-muted-foreground max-w-xl animate-slide-in-left animate-delay-100">
-              Transform how women access large contracts through collective bidding, 
+              Transform how entrepreneurs access large contracts through collective bidding, 
               secure payments, and validated skills.
             </p>
             
