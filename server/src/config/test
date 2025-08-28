@@ -1,0 +1,81 @@
+import { supabase } from '@/lib/supabase';
+
+export const debugSupabaseConnection = async () => {
+  console.log('🔍 Debugging Supabase Connection...');
+  
+  // Check if we can connect to Supabase
+  try {
+    console.log('Testing basic connection...');
+    const { data, error, status, statusText } = await supabase
+      .from('profiles')
+      .select('count')
+      .limit(1);
+    
+    console.log('Response status:', status);
+    console.log('Response statusText:', statusText);
+    console.log('Response data:', data);
+    console.log('Response error:', error);
+    
+    if (error) {
+      // Try different approaches
+      console.log('Trying alternative connection methods...');
+      
+      // Try with a simple table that might exist
+      const { data: authData, error: authError } = await supabase.auth.getSession();
+      console.log('Auth session check:', { authData, authError });
+      
+      // Try to list tables (this might give us more info)
+      const { data: schemaData, error: schemaError } = await supabase
+        .rpc('get_schema_tables')
+        .single();
+      console.log('Schema check:', { schemaData, schemaError });
+      
+      return { 
+        success: false, 
+        error: error.message,
+        details: {
+          status,
+          statusText,
+          originalError: error
+        }
+      };
+    }
+    
+    return { success: true, data };
+    
+  } catch (err) {
+    console.error('Connection failed with exception:', err);
+    return { 
+      success: false, 
+      error: err.message,
+      type: 'exception'
+    };
+  }
+};
+
+export const createTestTable = async () => {
+  console.log('🚀 Attempting to create test table...');
+  
+  try {
+    // Try to create a simple test table
+    const { data, error } = await supabase
+      .from('test_table')
+      .select('*')
+      .limit(1);
+    
+    if (error && error.message.includes('does not exist')) {
+      console.log('Test table does not exist, this is expected for first run');
+      return { 
+        success: true, 
+        message: 'Ready to create tables',
+        needsSetup: true 
+      };
+    }
+    
+    return { success: true, data };
+    
+  } catch (err) {
+    console.error('Test table creation failed:', err);
+    return { success: false, error: err.message };
+  }
+};

@@ -50,7 +50,7 @@ const SuiPage = () => {
       toast.info("Creating new Sui wallet...");
       
       // Generate new wallet
-      const { Ed25519Keypair } = await import('@mysten/sui.js/keypairs/ed25519');
+      const { Ed25519Keypair } = await import('@mysten/sui/keypairs/ed25519');
       
       const keypair = new Ed25519Keypair();
       const newAddress = keypair.toSuiAddress();

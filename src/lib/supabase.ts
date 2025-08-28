@@ -1,47 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Use the correct environment variables for Vite (VITE_ prefix)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kydqdeznecttpdaiueob.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5ZHFkZXpuZWN0dHBkYWl1ZW9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzMjk4MDUsImV4cCI6MjA3MTkwNTgwNX0.LejTPKQ9g1hQxX-ZQfKE589O4yEHs5154LoMvlBEQzk';
 
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...');
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'gigebid-frontend'
-    }
-  }
-});
-
-// Test connection function
-export const testSupabaseConnection = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('count')
-      .limit(1);
-    
-    if (error) {
-      console.error('Supabase connection error:', error);
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true, data };
-  } catch (err) {
-    console.error('Supabase connection failed:', err);
-    return { success: false, error: err.message };
-  }
-};
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types for TypeScript
 export interface Business {

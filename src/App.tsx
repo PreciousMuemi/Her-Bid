@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,7 @@ import IssuerDashboard from './pages/IssuerDashboard';
 import CreateContract from './pages/CreateContract';
 import Feedback from './components/Feedback';
 import AGIShowcase from './pages/AGIShowcase';
+import DatabaseDebug from '@/components/debug/DatabaseDebug';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -71,6 +71,8 @@ const App = () => {
                 <Route path="contracts/:id" element={<ContractDetails />} />
                 <Route path="feedback" element={<Feedback />} />
                 <Route path="demo" element={<Demo />} />
+                <Route path="agi-showcase" element={<AGIShowcase />} />
+                <Route path="database-debug" element={<DatabaseDebug />} />
               </Route>
 
               {/* Catch-all route */}

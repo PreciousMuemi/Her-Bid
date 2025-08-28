@@ -20,7 +20,7 @@ app.use('/api/mpesa', mpesaRouter);
 app.use('/api/jobs', jobsRouter);
 app.use('/api/escrow', escrowRouter);
 
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4001;
 app.listen(port, () => {
   logger.info(`Gige-Bid server listening on :${port}`);
 });
