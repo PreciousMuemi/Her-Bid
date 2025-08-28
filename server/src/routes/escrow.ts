@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import matchmaker from '../services/agiMatchmaker.js';
-import database from '../models/supabaseDatabase.js';
+import matchmaker from '../services/agiMatchmaker.ts';
+import database from '../models/supabaseDatabase.ts';
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ router.post('/recommend-team', async (req: Request, res: Response) => {
   }
 });
 
-// Secure funds endpoint - simulates M-Pesa STK Push
+// Secure funds endpoint - Real M-Pesa STK Push via Supabase
 router.post('/secure-funds', async (req: Request, res: Response) => {
   try {
     const { project_id, amount, phone_number, team_members } = req.body;
@@ -55,6 +55,35 @@ router.post('/secure-funds', async (req: Request, res: Response) => {
         message: 'Missing required fields: project_id, amount, phone_number'
       });
     }
+
+    console.log('🔒 Securing funds via real M-Pesa integration...');
+    console.log('Project ID:', project_id);
+    console.log('Amount:', amount);
+    console.log('Phone:', phone_number);
+
+    // Call the Supabase M-Pesa STK Push function
+    const mpesaResponse = await fetch(`${process.env.SUPABASE_URL}/functions/v1/mpesa-stk-push`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone_number: phone_number,
+        amount: parseFloat(amount),
+        order_id: project_id,
+        account_reference: `HerBid-${project_id}`
+      })
+    });
+
+    const mpesaData = await mpesaResponse.json();
+    
+    if (!mpesaResponse.ok || !mpesaData.success) {
+      console.error('❌ M-Pesa STK Push failed:', mpesaData);
+      throw new Error(mpesaData.error || 'M-Pesa payment initiation failed');
+    }
+
+    console.log('✅ M-Pesa STK Push successful:', mpesaData);
 
     // Find or create project
     let project;
@@ -84,58 +113,70 @@ router.post('/secure-funds', async (req: Request, res: Response) => {
         await database.createMilestone(milestone);
       }
     }
-
-    // Simulate M-Pesa STK Push
-    const checkoutRequestId = `WS${Date.now()}${Math.random().toString(36).substr(2, 5)}`;
-    const mpesaReceiptNumber = `MPE${Date.now()}`;
     
-    // Update project status
-    await database.updateProject(project_id, { funds_status: 'secured' });
-    
-    // Create escrow details
+    // Create escrow details with real M-Pesa data
     const escrowData = {
       project_id,
-      checkout_request_id: checkoutRequestId,
-      mpesa_receipt_number: mpesaReceiptNumber,
+      checkout_request_id: mpesaData.checkout_request_id,
+      mpesa_receipt_number: null, // Will be updated by callback
       amount: parseFloat(amount),
       phone_number,
       secured_at: new Date().toISOString(),
-      paybill_number: '522533',
-      account_reference: project_id
+      paybill_number: process.env.MPESA_SHORTCODE || '174379',
+      account_reference: `HerBid-${project_id}`
     };
     
     await database.createEscrowDetails(escrowData);
 
-    // Simulate successful M-Pesa response
-    setTimeout(() => {
-      res.json({
-        success: true,
-        message: 'Funds successfully secured in escrow',
-        escrow_details: {
-          project_id,
-          amount: parseFloat(amount),
-          currency: 'KES',
-          status: 'funds_in_escrow',
-          checkout_request_id: checkoutRequestId,
-          mpesa_receipt_number: mpesaReceiptNumber,
-          paybill_number: '522533',
-          account_reference: project_id,
-          secured_at: new Date().toISOString()
+    // Send SMS notification about payment request
+    try {
+      await fetch(`${process.env.SUPABASE_URL}/functions/v1/africastalking`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json'
         },
-        next_steps: [
-          'Team members have been notified',
-          'Project execution can begin',
-          'Milestone confirmations will release payments'
-        ]
+        body: JSON.stringify({
+          action: 'send_sms',
+          to: phone_number,
+          message: `Her-Bid payment request sent to your phone. Please enter your M-Pesa PIN to secure KES ${amount} for project ${project_id}. Your funds are protected by escrow.`,
+          notification_type: 'payment_request'
+        })
       });
-    }, 1500); // Simulate processing delay
+      console.log('📱 SMS notification sent');
+    } catch (smsError) {
+      console.warn('⚠️ SMS notification failed:', smsError);
+    }
+
+    res.json({
+      success: true,
+      message: 'M-Pesa payment request sent successfully',
+      escrow_details: {
+        project_id,
+        amount: parseFloat(amount),
+        currency: 'KES',
+        status: 'payment_pending',
+        checkout_request_id: mpesaData.checkout_request_id,
+        merchant_request_id: mpesaData.merchant_request_id,
+        customer_message: mpesaData.customer_message,
+        account_reference: `HerBid-${project_id}`,
+        secured_at: new Date().toISOString()
+      },
+      next_steps: [
+        'Check your phone for M-Pesa payment prompt',
+        'Enter your M-Pesa PIN to confirm payment',
+        'Funds will be secured in escrow upon confirmation',
+        'Team members will be notified to begin work'
+      ]
+    });
 
   } catch (error) {
-    console.error('Secure funds error:', error);
+    console.error('❌ Secure funds error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to secure funds',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: 'Failed to secure funds with M-Pesa',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      details: 'Check M-Pesa credentials and network connection'
     });
   }
 });

@@ -68,12 +68,8 @@ export class AGIMatchmaker {
 
   constructor() {
     this.database = new SupabaseDatabase();
-    // Pre-load demo data immediately
+    // Pre-load demo data immediately so we always have something to work with
     this.loadDemoUsers();
-    // Attempt to load real users in background
-    this.loadUsers().catch(error => {
-      console.log('📊 Using demo data for AGI matching due to database unavailability');
-    });
   }
 
   private loadDemoUsers(): void {
@@ -159,13 +155,13 @@ export class AGIMatchmaker {
       console.log('🔄 Attempting to load users from Supabase...');
       const users = await this.database.getAllUsers();
       if (users && users.length > 0) {
-        this.users = users;
+        this.users = [...this.users, ...users]; // Append real users to demo users
         console.log(`✅ Successfully loaded ${users.length} users from Supabase database`);
       } else {
         console.log('📊 No users in database, keeping demo data for presentation');
       }
     } catch (error) {
-      console.error('❌ Failed to load users from database:', error);
+      console.error('❌ Failed to load users from database:', error.message);
       console.log(`📊 Using ${this.users.length} demo users for AGI matching`);
     }
   }
@@ -173,13 +169,23 @@ export class AGIMatchmaker {
   /**
    * Find optimal team using multi-criteria analysis
    */
-  async findOptimalTeam(requirements: ProjectRequirements): Promise<TeamRecommendation> {
+  async findOptimalTeam(requirements: {
+    capacity_needed: number;
+    location: string;
+    skills_required: string[];
+    budget: number;
+  }): Promise<any> {
     console.log('🎯 AGI findOptimalTeam called with:', requirements);
     
-    // Ensure we have users
+    // Ensure we have users - demo data is already loaded in constructor
     if (this.users.length === 0) {
       this.loadDemoUsers();
     }
+    
+    // Try to load additional users in background (non-blocking)
+    this.loadUsers().catch(() => {
+      // Silently fail - we have demo data to work with
+    });
     
     // Advanced AGI-powered team selection algorithm
     const scoredUsers = this.users.map(user => {

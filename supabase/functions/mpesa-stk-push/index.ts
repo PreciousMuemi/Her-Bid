@@ -80,12 +80,38 @@ serve(async (req) => {
     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)
     const password = btoa(`${shortcode}${passkey}${timestamp}`)
 
-    // Step 3: Format phone number (remove leading 0, add 254)
-    let formattedPhone = phone_number.toString().replace(/\s+/g, '')
+    // Step 3: Format phone number (remove leading +, 0, spaces, add 254 prefix)
+    let formattedPhone = phone_number.toString().replace(/[\s+]/g, '') // Remove spaces and plus sign
+    
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '254' + formattedPhone.slice(1)
-    } else if (!formattedPhone.startsWith('254')) {
+    } else if (formattedPhone.startsWith('254')) {
+      // Already in correct format
+      formattedPhone = formattedPhone
+    } else {
+      // Assume it's a local number without country code
       formattedPhone = '254' + formattedPhone
+    }
+
+    console.log(`📱 Phone formatting: ${phone_number} -> ${formattedPhone}`)
+
+    // Validate final format (should be 12 digits starting with 254)
+    if (!/^254\d{9}$/.test(formattedPhone)) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid phone number format', 
+          details: { 
+            original: phone_number,
+            formatted: formattedPhone,
+            expected: '254XXXXXXXXX (12 digits total)'
+          }
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     // Step 4: Prepare STK Push payload
