@@ -1,14 +1,45 @@
-import supabase from '../config/supabase.js';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-export class SupabaseDatabase {
+dotenv.config();
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing Supabase configuration:');
+  console.error('SUPABASE_URL:', !!supabaseUrl);
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseServiceKey);
+  throw new Error('Missing Supabase environment variables');
+}
+
+console.log('🔧 Supabase Config Check:');
+console.log('URL:', supabaseUrl);
+console.log('Service Key exists:', !!supabaseServiceKey);
+console.log('Service Key prefix:', supabaseServiceKey?.substring(0, 20) + '...');
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+class SupabaseDatabase {
   // Users operations
   async getAllUsers(): Promise<any[]> {
     const { data, error } = await supabase
       .from('users')
-      .select('*');
-    
-    if (error) throw error;
-    return data;
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    console.log(`✅ Successfully fetched ${data?.length || 0} users`);
+    return data || [];
   }
 
   async getUserById(userId: string): Promise<any> {
@@ -17,8 +48,13 @@ export class SupabaseDatabase {
       .select('*')
       .eq('id', userId)
       .single();
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    console.log(`✅ Successfully fetched user: ${data?.name || 'Unknown'}`);
     return data;
   }
 
@@ -28,8 +64,13 @@ export class SupabaseDatabase {
       .insert([userData])
       .select()
       .single();
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('❌ Supabase insert error:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    console.log(`✅ Successfully created user: ${data.name}`);
     return data;
   }
 
@@ -40,7 +81,7 @@ export class SupabaseDatabase {
       .eq('id', userId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -54,7 +95,7 @@ export class SupabaseDatabase {
         project_milestones(*),
         escrow_details(*)
       `);
-    
+
     if (error) throw error;
     return data;
   }
@@ -69,7 +110,7 @@ export class SupabaseDatabase {
       `)
       .eq('id', projectId)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -80,7 +121,7 @@ export class SupabaseDatabase {
       .insert([projectData])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -92,7 +133,7 @@ export class SupabaseDatabase {
       .eq('id', projectId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -104,7 +145,7 @@ export class SupabaseDatabase {
       .insert([milestoneData])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -116,7 +157,7 @@ export class SupabaseDatabase {
       .eq('id', milestoneId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -127,7 +168,7 @@ export class SupabaseDatabase {
       .select('*')
       .eq('project_id', projectId)
       .order('id');
-    
+
     if (error) throw error;
     return data;
   }
@@ -139,7 +180,7 @@ export class SupabaseDatabase {
       .insert([paymentData])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -151,7 +192,7 @@ export class SupabaseDatabase {
       .eq('id', paymentId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -161,7 +202,7 @@ export class SupabaseDatabase {
       .from('milestone_payments')
       .select('*')
       .eq('milestone_id', milestoneId);
-    
+
     if (error) throw error;
     return data;
   }
@@ -173,7 +214,7 @@ export class SupabaseDatabase {
       .insert([escrowData])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -185,7 +226,7 @@ export class SupabaseDatabase {
       .eq('project_id', projectId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -196,7 +237,7 @@ export class SupabaseDatabase {
       .select('*')
       .eq('project_id', projectId)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -373,6 +414,73 @@ export class SupabaseDatabase {
 
     console.log('Database seeded successfully with initial data');
   }
+
+  // Additional methods
+  async getUsersBySkills(skills: string[]) {
+    try {
+      console.log(`🔍 Fetching users with skills: ${skills.join(', ')}`);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .contains('skills', skills);
+
+      if (error) {
+        console.error('❌ Supabase query error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      console.log(`✅ Found ${data?.length || 0} users with matching skills`);
+      return data || [];
+    } catch (error) {
+      console.error('❌ getUsersBySkills error:', error);
+      throw error;
+    }
+  }
+
+  async getUsersByLocation(location: string) {
+    try {
+      console.log(`🔍 Fetching users in location: ${location}`);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('location', `%${location}%`);
+
+      if (error) {
+        console.error('❌ Supabase query error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      console.log(`✅ Found ${data?.length || 0} users in ${location}`);
+      return data || [];
+    } catch (error) {
+      console.error('❌ getUsersByLocation error:', error);
+      throw error;
+    }
+  }
+
+  // Test connection
+  async testConnection() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('count')
+        .limit(1);
+
+      if (error) {
+        console.error('❌ Connection test failed:', error);
+        return false;
+      }
+
+      console.log('✅ Database connection test successful');
+      return true;
+    } catch (error) {
+      console.error('❌ Connection test error:', error);
+      return false;
+    }
+  }
 }
 
-export default new SupabaseDatabase();
+const database = new SupabaseDatabase();
+export default database;

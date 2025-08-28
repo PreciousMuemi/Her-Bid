@@ -1,26 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Users, 
-  MapPin, 
-  Star, 
-  CheckCircle, 
-  Clock, 
-  CreditCard, 
-  Truck,
-  Shield,
-  Zap,
-  ArrowRight,
-  Phone
-} from 'lucide-react';
+import { Users, MapPin, Star, CheckCircle, Clock, Shield, Zap, ArrowRight, Phone, AlertCircle } from 'lucide-react';
 
-const Demo: React.FC = () => {
+const Demo = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [teamRecommendation, setTeamRecommendation] = useState(null);
+  const [escrowStatus, setEscrowStatus] = useState(null);
+  const [backendConnected, setBackendConnected] = useState(false);
+  
   const [projectData, setProjectData] = useState({
     title: 'Egg Supply for 10 Schools',
     location: 'Kibera, Nairobi',
@@ -28,29 +21,137 @@ const Demo: React.FC = () => {
     budget: 50000,
     phone: '+254712345000'
   });
-  const [teamRecommendation, setTeamRecommendation] = useState(null);
-  const [escrowStatus, setEscrowStatus] = useState(null);
-  const [milestoneStatus, setMilestoneStatus] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+  // Check backend connection and load users
+  useEffect(() => {
+    const checkBackendAndLoadUsers = async () => {
+      try {
+        console.log('🔍 Checking backend connection...');
+        
+        // Test backend health
+        const healthResponse = await fetch('http://localhost:4000/health');
+        
+        if (!healthResponse.ok) {
+          throw new Error('Backend health check failed');
+        }
+        
+        setBackendConnected(true);
+        console.log('✅ Backend connected successfully');
+        
+        // Load users
+        const usersResponse = await fetch('http://localhost:4000/api/users');
+        const userData = await usersResponse.json();
+        
+        if (userData.success && Array.isArray(userData.users)) {
+          setAvailableUsers(userData.users);
+          console.log(`✅ Loaded ${userData.users.length} users from database`);
+        } else {
+          throw new Error('Invalid user data format');
+        }
+        
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error);
+        setBackendConnected(false);
+        
+        // Set fallback mock users
+        const mockUsers = [
+          { 
+            id: '1', 
+            name: 'Grace Wanjiku', 
+            location: 'Nairobi', 
+            skills: ['Egg Supply', 'Poultry Farming'], 
+            capacity_numeric: 3, 
+            reputation_score: 9.2 
+          },
+          { 
+            id: '2', 
+            name: 'Mary Njeri', 
+            location: 'Nairobi', 
+            skills: ['Logistics', 'Distribution'], 
+            capacity_numeric: 4, 
+            reputation_score: 8.7 
+          },
+          { 
+            id: '3', 
+            name: 'Jane Muthoni', 
+            location: 'Kiambu', 
+            skills: ['Quality Control', 'Inspection'], 
+            capacity_numeric: 2, 
+            reputation_score: 8.9 
+          }
+        ];
+        
+        setAvailableUsers(mockUsers);
+        console.log('🔄 Using fallback mock users');
+      }
+    };
+    
+    checkBackendAndLoadUsers();
+  }, []);
 
   const handleGetTeamRecommendation = async () => {
     setLoading(true);
     try {
+      if (!backendConnected) {
+        // Use mock recommendation if backend is down
+        const mockRecommendation = {
+          recommended_team: availableUsers.slice(0, 3),
+          explanation: `Mock AGI Analysis: Selected team of ${availableUsers.slice(0, 3).length} members with combined capacity of ${availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0)} schools/day. High reputation scores and complementary skills.`,
+          total_capacity: availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0),
+          confidence_score: 87,
+          estimated_cost: []
+        };
+        
+        setTeamRecommendation(mockRecommendation);
+        setCurrentStep(2);
+        console.log('✅ Mock recommendation generated');
+        return;
+      }
+      
+      console.log('🧠 Requesting AGI team recommendation...');
+      
       const response = await fetch('http://localhost:4000/api/escrow/recommend-team', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(projectData),
+        body: JSON.stringify({
+          title: projectData.title,
+          location: projectData.location,
+          capacity_needed: projectData.capacity_needed,
+          budget: projectData.budget,
+          skills_required: ['Egg Supply', 'Logistics', 'Quality Control']
+        }),
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      
       if (data.success) {
         setTeamRecommendation(data.recommendation);
         setCurrentStep(2);
+        console.log('✅ AGI recommendation received');
+      } else {
+        throw new Error(data.message || 'Failed to get recommendation');
       }
     } catch (error) {
-      console.error('Error getting team recommendation:', error);
+      console.error('❌ Error getting team recommendation:', error);
+      alert(`AGI Error: ${error.message}\n\nUsing mock data for demo purposes.`);
+      
+      // Fallback to mock recommendation
+      const mockRecommendation = {
+        recommended_team: availableUsers.slice(0, 3),
+        explanation: `Fallback AGI Analysis: Selected team with total capacity of ${availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0)} schools/day.`,
+        total_capacity: availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0),
+        confidence_score: 75,
+        estimated_cost: []
+      };
+      
+      setTeamRecommendation(mockRecommendation);
+      setCurrentStep(2);
     }
     setLoading(false);
   };
@@ -58,57 +159,68 @@ const Demo: React.FC = () => {
   const handleSecureFunds = async () => {
     setLoading(true);
     try {
+      if (!backendConnected) {
+        // Mock escrow for demo
+        const mockEscrow = {
+          project_id: `mock_project_${Date.now()}`,
+          amount: projectData.budget,
+          status: 'secured',
+          checkout_request_id: `CHK_MOCK_${Date.now()}`,
+          created_at: new Date().toISOString()
+        };
+        
+        setEscrowStatus(mockEscrow);
+        setCurrentStep(3);
+        console.log('✅ Mock escrow created');
+        return;
+      }
+      
+      console.log('💰 Securing funds with M-Pesa...');
+      
+      const projectId = `project_${Date.now()}`;
+      
       const response = await fetch('http://localhost:4000/api/escrow/secure-funds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          project_id: 'demo_project_001',
+          project_id: projectId,
           amount: projectData.budget,
           phone_number: projectData.phone,
           title: projectData.title,
           team_members: teamRecommendation?.recommended_team || []
         }),
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      
       if (data.success) {
         setEscrowStatus(data.escrow_details);
         setCurrentStep(3);
+        console.log('✅ Funds secured with M-Pesa');
+      } else {
+        throw new Error(data.message || 'Failed to secure funds');
       }
     } catch (error) {
-      console.error('Error securing funds:', error);
-    }
-    setLoading(false);
-  };
-
-  const handleConfirmMilestone = async (milestoneId: number) => {
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:4000/api/escrow/confirm-milestone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          project_id: 'demo_project_001',
-          milestone_id: milestoneId,
-          confirmed_by: 'School Procurement Officer'
-        }),
-      });
+      console.error('❌ Error securing funds:', error);
+      alert(`M-Pesa Error: ${error.message}\n\nUsing mock escrow for demo.`);
       
-      const data = await response.json();
-      if (data.success) {
-        setMilestoneStatus(prev => [...prev, data.milestone_details]);
-        if (milestoneId === 3) {
-          setCurrentStep(5); // Project completed
-        } else {
-          setCurrentStep(4); // Milestone confirmed
-        }
-      }
-    } catch (error) {
-      console.error('Error confirming milestone:', error);
+      // Mock escrow for demo
+      const mockEscrow = {
+        project_id: `fallback_project_${Date.now()}`,
+        amount: projectData.budget,
+        status: 'secured',
+        checkout_request_id: `CHK_FALLBACK_${Date.now()}`,
+        created_at: new Date().toISOString()
+      };
+      
+      setEscrowStatus(mockEscrow);
+      setCurrentStep(3);
     }
     setLoading(false);
   };
@@ -119,21 +231,51 @@ const Demo: React.FC = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-foreground">
-            Gige-Bid Demo: Intelligent Marketplace
+            🚀 Gige-Bid Real Demo: Live AGI + M-Pesa
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Experience how AGI-powered team formation and M-Pesa escrow create trust in the gig economy
+            Real AGI team formation • Live database • Simulated M-Pesa integration
           </p>
+          
+          <div className="flex justify-center gap-2 flex-wrap">
+            <Badge variant="outline" className={`px-3 py-1 ${
+              backendConnected ? 'border-green-500 text-green-700' : 'border-orange-500 text-orange-700'
+            }`}>
+              <Users className="w-3 h-3 mr-1" />
+              {availableUsers.length} Users {backendConnected ? '(Live)' : '(Mock)'}
+            </Badge>
+            <Badge variant="outline" className={`px-3 py-1 ${
+              backendConnected ? 'border-blue-500 text-blue-700' : 'border-orange-500 text-orange-700'
+            }`}>
+              <Zap className="w-3 h-3 mr-1" />
+              AGI Engine {backendConnected ? '(Live)' : '(Mock)'}
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1 border-purple-500 text-purple-700">
+              <Phone className="w-3 h-3 mr-1" />
+              M-Pesa Integration
+            </Badge>
+          </div>
+
+          {/* Backend Status Warning */}
+          {!backendConnected && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <div className="flex items-center space-x-2 text-orange-800">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">Backend Offline - Using Mock Data</span>
+              </div>
+              <p className="text-sm text-orange-700 mt-1">
+                Start your backend server on localhost:4000 for full functionality
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Progress Steps */}
         <div className="flex justify-center space-x-4 mb-8">
           {[
-            { step: 1, title: 'Project Creation', icon: <Users className="w-4 h-4" /> },
+            { step: 1, title: 'Project Setup', icon: <Users className="w-4 h-4" /> },
             { step: 2, title: 'AGI Matching', icon: <Zap className="w-4 h-4" /> },
-            { step: 3, title: 'Secure Funds', icon: <Shield className="w-4 h-4" /> },
-            { step: 4, title: 'Execution', icon: <Truck className="w-4 h-4" /> },
-            { step: 5, title: 'Completion', icon: <CheckCircle className="w-4 h-4" /> }
+            { step: 3, title: 'M-Pesa Escrow', icon: <Shield className="w-4 h-4" /> }
           ].map(({ step, title, icon }) => (
             <div key={step} className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
               currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
@@ -144,16 +286,51 @@ const Demo: React.FC = () => {
           ))}
         </div>
 
+        {/* Available Users Preview */}
+        {availableUsers.length > 0 && currentStep === 1 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>💾 Available Team Members {backendConnected ? '(Live Data)' : '(Mock Data)'}</CardTitle>
+              <CardDescription>
+                {availableUsers.length} verified professionals {backendConnected ? 'loaded from database' : 'using fallback data'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {availableUsers.slice(0, 6).map((user) => (
+                  <div key={user.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">{user.name}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        ⭐ {user.reputation_score}/10
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">📍 {user.location}</p>
+                    <p className="text-sm">🎯 {user.capacity_numeric} schools/day</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {(user.skills || []).slice(0, 2).map((skill) => (
+                        <Badge key={skill} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Step 1: Project Creation */}
         {currentStep === 1 && (
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="w-5 h-5" />
-                <span>Step 1: Create Project</span>
+                <span>Step 1: Configure Project Requirements</span>
               </CardTitle>
               <CardDescription>
-                A school procurement officer posts a project for egg supply to multiple schools
+                Set up your project for AGI team formation and M-Pesa escrow
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -181,7 +358,7 @@ const Demo: React.FC = () => {
                       id="capacity"
                       type="number"
                       value={projectData.capacity_needed}
-                      onChange={(e) => setProjectData(prev => ({ ...prev, capacity_needed: parseInt(e.target.value) }))}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, capacity_needed: parseInt(e.target.value) || 0 }))}
                     />
                   </div>
                   <div>
@@ -190,28 +367,39 @@ const Demo: React.FC = () => {
                       id="budget"
                       type="number"
                       value={projectData.budget}
-                      onChange={(e) => setProjectData(prev => ({ ...prev, budget: parseFloat(e.target.value) }))}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, budget: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">M-Pesa Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={projectData.phone}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+254712345000"
                     />
                   </div>
                 </div>
                 <div className="bg-muted/50 p-6 rounded-lg">
-                  <h3 className="font-semibold mb-4">Project Summary</h3>
+                  <h3 className="font-semibold mb-4">📊 Project Summary</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span>Schools:</span>
+                      <span>🏫 Schools:</span>
                       <span className="font-medium">{projectData.capacity_needed}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Location:</span>
+                      <span>📍 Location:</span>
                       <span className="font-medium">{projectData.location}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Budget:</span>
+                      <span>💰 Total Budget:</span>
                       <span className="font-medium">KES {projectData.budget.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Per School:</span>
-                      <span className="font-medium">KES {(projectData.budget / projectData.capacity_needed).toLocaleString()}</span>
+                      <span>💵 Per School:</span>
+                      <span className="font-medium">
+                        KES {projectData.capacity_needed > 0 ? (projectData.budget / projectData.capacity_needed).toLocaleString() : '0'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -221,7 +409,7 @@ const Demo: React.FC = () => {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Finding Optimal Team...' : 'Get AGI Team Recommendation'}
+                {loading ? '🧠 AGI Engine Processing...' : `🚀 Get ${backendConnected ? 'Live' : 'Mock'} AGI Team Recommendation`}
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </CardContent>
@@ -230,214 +418,90 @@ const Demo: React.FC = () => {
 
         {/* Step 2: AGI Team Recommendation */}
         {currentStep === 2 && teamRecommendation && (
-          <Card className="border-2">
+          <Card className="border-2 border-blue-200">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center space-x-2 text-blue-800">
                 <Zap className="w-5 h-5" />
-                <span>Step 2: AGI Team Recommendation</span>
+                <span>Step 2: AGI Team Recommendation {!backendConnected && '(Mock)'}</span>
               </CardTitle>
               <CardDescription>
-                Our AGI analyzed {teamRecommendation.recommended_team.length} optimal team members with {teamRecommendation.confidence_score}% confidence
+                AI-powered optimal team formation based on your requirements
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Explanation */}
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="font-semibold text-blue-900 mb-3">AGI Reasoning</h3>
-                <div className="text-blue-800 text-sm whitespace-pre-line">
-                  {teamRecommendation.explanation}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">🧠 AGI Analysis:</h3>
+                <p className="text-blue-800 text-sm">{teamRecommendation.explanation}</p>
+                <div className="mt-2 flex gap-4 text-sm">
+                  <span className="text-blue-700">
+                    🎯 Confidence: {teamRecommendation.confidence_score}%
+                  </span>
+                  <span className="text-blue-700">
+                    📈 Total Capacity: {teamRecommendation.total_capacity} schools/day
+                  </span>
                 </div>
               </div>
 
-              {/* Team Members */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {teamRecommendation.recommended_team.map((member, index) => (
-                  <Card key={index} className="border">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-semibold">{member.name}</h4>
-                            <p className="text-sm text-muted-foreground">{member.role}</p>
-                          </div>
-                          <Badge variant="secondary" className="flex items-center space-x-1">
-                            <Star className="w-3 h-3" />
-                            <span>{member.reputation_score}</span>
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          <span>{member.location}</span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Capacity:</span> {member.allocated_capacity} schools/day
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Experience:</span> {member.projects_completed} projects
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(teamRecommendation.recommended_team || []).map((member, index) => (
+                  <div key={member.id || index} className="p-4 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">{member.name}</h4>
+                      <Badge variant="outline">⭐ {member.reputation_score}/10</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">📍 {member.location}</p>
+                    <p className="text-sm mb-2">🎯 {member.capacity_numeric} schools/day</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(member.skills || []).slice(0, 3).map((skill) => (
+                        <Badge key={skill} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
 
-              {/* Cost Breakdown */}
-              <div className="bg-muted/50 p-6 rounded-lg">
-                <h3 className="font-semibold mb-4">Payment Distribution</h3>
-                <div className="space-y-2">
-                  {teamRecommendation.estimated_cost.map((payment, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>{payment.name} ({payment.percentage}%)</span>
-                      <span className="font-medium">KES {payment.payment_share.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button onClick={handleSecureFunds} className="w-full" disabled={loading}>
-                {loading ? 'Securing Funds...' : 'Accept Team & Secure Funds'}
-                <Shield className="ml-2 w-4 h-4" />
+              <Button 
+                onClick={handleSecureFunds} 
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? '💰 Processing M-Pesa...' : `🔒 Secure Funds with ${backendConnected ? 'Live' : 'Mock'} M-Pesa`}
+                <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 3: Funds Secured */}
+        {/* Step 3: M-Pesa Escrow */}
         {currentStep === 3 && escrowStatus && (
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5" />
-                <span>Step 3: Funds Secured in Escrow</span>
-              </CardTitle>
-              <CardDescription>
-                M-Pesa payment successful. Funds are now secured and will be released upon milestone completion.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                  <h3 className="font-semibold text-green-900">Payment Successful</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-green-700">Amount Secured:</span>
-                    <p className="font-semibold text-green-900">KES {escrowStatus.amount.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <span className="text-green-700">M-Pesa Receipt:</span>
-                    <p className="font-semibold text-green-900">{escrowStatus.mpesa_receipt_number}</p>
-                  </div>
-                  <div>
-                    <span className="text-green-700">Paybill Number:</span>
-                    <p className="font-semibold text-green-900">{escrowStatus.paybill_number}</p>
-                  </div>
-                  <div>
-                    <span className="text-green-700">Account Reference:</span>
-                    <p className="font-semibold text-green-900">{escrowStatus.account_reference}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="font-semibold">Project Milestones</h3>
-                <div className="space-y-3">
-                  {[
-                    { id: 1, title: 'First delivery batch (40%)', amount: escrowStatus.amount * 0.4 },
-                    { id: 2, title: 'Second delivery batch (30%)', amount: escrowStatus.amount * 0.3 },
-                    { id: 3, title: 'Final delivery batch (30%)', amount: escrowStatus.amount * 0.3 }
-                  ].map((milestone) => (
-                    <div key={milestone.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{milestone.title}</h4>
-                        <p className="text-sm text-muted-foreground">KES {milestone.amount.toLocaleString()}</p>
-                      </div>
-                      <Button 
-                        onClick={() => handleConfirmMilestone(milestone.id)}
-                        disabled={loading || milestoneStatus.some(m => m.milestone_id === milestone.id)}
-                        variant={milestoneStatus.some(m => m.milestone_id === milestone.id) ? "secondary" : "default"}
-                      >
-                        {milestoneStatus.some(m => m.milestone_id === milestone.id) ? 'Completed' : 'Confirm Delivery'}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 4: Milestone Confirmed */}
-        {currentStep === 4 && milestoneStatus.length > 0 && (
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Truck className="w-5 h-5" />
-                <span>Step 4: Milestone Confirmed</span>
-              </CardTitle>
-              <CardDescription>
-                Delivery confirmed. Payments have been automatically sent to team members.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {milestoneStatus.map((milestone, index) => (
-                <div key={index} className="bg-green-50 p-6 rounded-lg border border-green-200">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                    <h3 className="font-semibold text-green-900">
-                      Milestone {milestone.milestone_id} Completed
-                    </h3>
-                  </div>
-                  <p className="text-green-800 mb-4">{milestone.description}</p>
-                  <div className="text-sm text-green-700">
-                    <p>✅ Payments sent to team members' M-Pesa accounts</p>
-                    <p>✅ Escrow automatically released {milestone.percentage}% of funds</p>
-                    <p>✅ Transaction recorded on blockchain for transparency</p>
-                  </div>
-                </div>
-              ))}
-              
-              <div className="text-center">
-                <Button onClick={() => handleConfirmMilestone(milestoneStatus.length + 1)} disabled={loading}>
-                  {loading ? 'Processing...' : 'Confirm Next Delivery'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 5: Project Completed */}
-        {currentStep === 5 && (
           <Card className="border-2 border-green-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-800">
-                <CheckCircle className="w-5 h-5" />
-                <span>Project Successfully Completed!</span>
+                <Shield className="w-5 h-5" />
+                <span>Step 3: M-Pesa Escrow Secured {!backendConnected && '(Mock)'}</span>
               </CardTitle>
               <CardDescription>
-                All milestones confirmed. Payments distributed. Project closed.
+                Funds secured in escrow. Project ready to begin!
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="bg-green-50 p-6 rounded-lg text-center">
-                <h3 className="text-2xl font-bold text-green-900 mb-4">🎉 Demo Complete!</h3>
-                <p className="text-green-800 mb-6">
-                  You've experienced the full Gige-Bid workflow: AGI team formation, 
-                  secure M-Pesa escrow, and automatic milestone-based payments.
+                <h3 className="text-2xl font-bold text-green-900 mb-4">✅ Demo Successfully Completed!</h3>
+                <p className="text-green-800 mb-4">
+                  Your funds are secured in M-Pesa escrow. The AGI-selected team is ready to begin delivery.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="bg-white p-4 rounded-lg">
-                    <h4 className="font-semibold text-green-900">Trust Built</h4>
-                    <p className="text-green-700">Blockchain-verified transactions</p>
+                    <h4 className="font-semibold text-green-900">💰 Escrow Details</h4>
+                    <p className="text-green-700">Amount: KES {escrowStatus.amount?.toLocaleString()}</p>
+                    <p className="text-green-700">Status: {escrowStatus.status}</p>
                   </div>
                   <div className="bg-white p-4 rounded-lg">
-                    <h4 className="font-semibold text-green-900">Payments Secured</h4>
-                    <p className="text-green-700">M-Pesa escrow protection</p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg">
-                    <h4 className="font-semibold text-green-900">Team Optimized</h4>
-                    <p className="text-green-700">AGI-powered matching</p>
+                    <h4 className="font-semibold text-green-900">📱 M-Pesa Reference</h4>
+                    <p className="text-green-700">ID: {escrowStatus.checkout_request_id?.slice(-8)}</p>
+                    <p className="text-green-700">Project: {escrowStatus.project_id?.slice(-8)}</p>
                   </div>
                 </div>
               </div>
@@ -447,9 +511,8 @@ const Demo: React.FC = () => {
                   setCurrentStep(1);
                   setTeamRecommendation(null);
                   setEscrowStatus(null);
-                  setMilestoneStatus([]);
                 }} variant="outline">
-                  Run Demo Again
+                  🔄 Run Demo Again
                 </Button>
               </div>
             </CardContent>

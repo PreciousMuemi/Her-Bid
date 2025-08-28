@@ -1,29 +1,38 @@
 import express, { Request, Response } from 'express';
-import database from '../models/supabaseDatabase.js';
 import matchmaker from '../services/agiMatchmaker.js';
+import database from '../models/supabaseDatabase.js';
 
 const router = express.Router();
 
-// Generate team recommendation
+// Team recommendation endpoint
 router.post('/recommend-team', async (req: Request, res: Response) => {
   try {
-    const { title, location, capacity_needed, budget, skills_required } = req.body;
-    
-    const projectRequirements = {
-      title,
-      location,
-      capacity_needed: parseInt(capacity_needed),
-      budget: parseFloat(budget),
-      skills_required: skills_required || ['Egg Supply']
-    };
+    console.log('🎯 Team recommendation request received:', req.body);
 
-    const recommendation = matchmaker.findOptimalTeam(projectRequirements);
-    
+    const { title, location, capacity_needed, budget, skills_required } = req.body;
+
+    if (!location || !capacity_needed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location and capacity_needed are required'
+      });
+    }
+
+    // Call the correct method name
+    const recommendation = await matchmaker.findOptimalTeam({
+      capacity_needed: parseInt(capacity_needed),
+      location,
+      skills_required: skills_required || ['Egg Supply', 'Logistics'],
+      budget: parseFloat(budget) || 0
+    });
+
     res.json({
       success: true,
       recommendation,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      request_data: { title, location, capacity_needed, budget }
     });
+
   } catch (error) {
     console.error('Team recommendation error:', error);
     res.status(500).json({

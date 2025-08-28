@@ -1,8 +1,8 @@
-import { Router, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import Joi from 'joi';
 import PaymentBridgeService from '../services/paymentBridge';
 
-const router = Router();
+const router = express.Router();
 const paymentBridge = new PaymentBridgeService();
 
 // Get current exchange rate
@@ -168,6 +168,175 @@ router.get('/status/:transactionId', async (req: Request, res: Response) => {
     return res.status(500).json({ 
       success: false, 
       error: 'Failed to get payment status' 
+    });
+  }
+});
+
+// Real M-Pesa STK Push
+router.post('/mpesa-stk-push', async (req: Request, res: Response) => {
+  try {
+    const { phone_number, amount, order_id, account_reference } = req.body;
+
+    // Validate inputs
+    if (!phone_number || !amount || !order_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: phone_number, amount, order_id'
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^(254|0)[17]\d{8}$/;
+    if (!phoneRegex.test(phone_number.toString().replace(/\s+/g, ''))) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid phone number format. Use 254XXXXXXXXX or 07XXXXXXXX format'
+      });
+    }
+
+    // Validate amount
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount < 1 || numAmount > 70000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be between KES 1 and KES 70,000'
+      });
+    }
+
+    console.log('🏦 Initiating real M-Pesa STK Push:', {
+      phone: phone_number,
+      amount: numAmount,
+      order: order_id
+    });
+
+    // Call Supabase Edge Function for real M-Pesa integration
+    const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/mpesa-stk-push`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone_number,
+        amount: numAmount,
+        order_id,
+        account_reference
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      console.log('✅ STK Push successful:', {
+        checkout_id: data.checkout_request_id,
+        merchant_id: data.merchant_request_id
+      });
+
+      res.json({
+        success: true,
+        message: 'STK push sent successfully. Please check your phone.',
+        checkout_request_id: data.checkout_request_id,
+        merchant_request_id: data.merchant_request_id,
+        customer_message: data.customer_message
+      });
+    } else {
+      console.error('❌ STK Push failed:', data);
+      res.status(400).json({
+        success: false,
+        error: data.error || 'STK push failed',
+        details: data.details,
+        response_code: data.response_code
+      });
+    }
+
+  } catch (error) {
+    console.error('Payment error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// Transaction status check
+router.get('/transaction-status/:checkout_request_id', async (req: Request, res: Response) => {
+  try {
+    const { checkout_request_id } = req.params;
+
+    console.log('🔍 Checking transaction status:', checkout_request_id);
+
+    const response = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/mpesa_transactions?checkout_request_id=eq.${checkout_request_id}&select=*`,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': process.env.SUPABASE_ANON_KEY!,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const transactions = await response.json();
+
+    if (response.ok && transactions.length > 0) {
+      const transaction = transactions[0];
+      
+      res.json({
+        success: true,
+        transaction
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'Transaction not found'
+      });
+    }
+
+  } catch (error) {
+    console.error('Transaction status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Query transaction by order ID
+router.get('/order-transactions/:order_id', async (req: Request, res: Response) => {
+  try {
+    const { order_id } = req.params;
+
+    const response = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/mpesa_transactions?order_id=eq.${order_id}&select=*&order=created_at.desc`,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': process.env.SUPABASE_ANON_KEY!,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const transactions = await response.json();
+
+    if (response.ok) {
+      res.json({
+        success: true,
+        transactions
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to fetch transactions'
+      });
+    }
+
+  } catch (error) {
+    console.error('Order transactions error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
     });
   }
 });

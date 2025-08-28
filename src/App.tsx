@@ -25,6 +25,7 @@ import CreateContract from './pages/CreateContract';
 import Feedback from './components/Feedback';
 import AGIShowcase from './pages/AGIShowcase';
 import DatabaseDebug from '@/components/debug/DatabaseDebug';
+import EndToEndDemo from './components/demo/EndToEndDemo';
 
 // Context and hooks
 import { useThemeStore } from "./store/themeStore";
@@ -73,6 +74,7 @@ const App = () => {
                 <Route path="demo" element={<Demo />} />
                 <Route path="agi-showcase" element={<AGIShowcase />} />
                 <Route path="database-debug" element={<DatabaseDebug />} />
+                <Route path="end-to-end-demo" element={<EndToEndDemo />} />
               </Route>
 
               {/* Catch-all route */}
