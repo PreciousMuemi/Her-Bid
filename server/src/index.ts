@@ -15,7 +15,7 @@ import cors from 'cors';
 import pino from 'pino';
 import userRouter from './routes/users.js';
 import escrowRouter from './routes/escrow.js';
-import paymentRouter from './routes/payment';
+import paymentRouter from './routes/payment.js';
 
 const app = express();
 const logger = pino();
@@ -51,5 +51,8 @@ app.listen(PORT, () => {
   logger.info(`🚀 Gige-Bid Real Demo Server running on :${PORT}`);
   logger.info(`📊 Database: Supabase ${process.env.SUPABASE_URL ? 'configured' : 'NOT configured'}`);
   logger.info(`🧠 AGI: Live matchmaking engine active`);
-  logger.info(`💰 M-Pesa: Edge functions configured`);
+  logger.info(`💰 M-Pesa: Real integration configured`);
+  logger.info(`🔗 Payment Endpoints:`);
+  logger.info(`   POST /api/payment/mpesa-stk-push`);
+  logger.info(`   GET  /api/payment/transaction-status/:id`);
 });

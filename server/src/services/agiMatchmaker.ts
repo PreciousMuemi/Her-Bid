@@ -68,8 +68,12 @@ export class AGIMatchmaker {
 
   constructor() {
     this.database = new SupabaseDatabase();
-    // Pre-load demo data
+    // Pre-load demo data immediately
     this.loadDemoUsers();
+    // Attempt to load real users in background
+    this.loadUsers().catch(error => {
+      console.log('📊 Using demo data for AGI matching due to database unavailability');
+    });
   }
 
   private loadDemoUsers(): void {
@@ -133,9 +137,21 @@ export class AGIMatchmaker {
         projects_completed: 14,
         specialization: 'Cold Chain',
         created_at: '2024-01-30T14:10:00.000Z'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440006',
+        name: 'David Mwangi',
+        email: 'david.mwangi@gmail.com',
+        skills: ['Transportation', 'Fleet Management', 'Route Planning'],
+        location: 'Nairobi',
+        capacity_numeric: 10,
+        reputation_score: 8.3,
+        projects_completed: 8,
+        specialization: 'Transportation',
+        created_at: '2024-03-01T16:30:00.000Z'
       }
     ];
-    console.log(`✅ Pre-loaded ${this.users.length} demo users for AGI matching`);
+    console.log(`✅ Pre-loaded ${this.users.length} high-quality demo users for AGI matching`);
   }
 
   async loadUsers(): Promise<void> {
@@ -146,10 +162,11 @@ export class AGIMatchmaker {
         this.users = users;
         console.log(`✅ Successfully loaded ${users.length} users from Supabase database`);
       } else {
-        console.log('📊 No users in database, using demo data for presentation');
+        console.log('📊 No users in database, keeping demo data for presentation');
       }
     } catch (error) {
-      console.error('❌ Supabase connection failed, using demo data:', error.message);
+      console.error('❌ Failed to load users from database:', error);
+      console.log(`📊 Using ${this.users.length} demo users for AGI matching`);
     }
   }
 
@@ -161,20 +178,7 @@ export class AGIMatchmaker {
     
     // Ensure we have users
     if (this.users.length === 0) {
-      await this.loadUsers();
-    }
-
-    // If still no users, return empty result
-    if (this.users.length === 0) {
-      return {
-        team_members: [],
-        compatibility_score: 0,
-        geographical_bonus: 0,
-        skill_coverage: {},
-        estimated_success_rate: 0,
-        collaboration_synergies: [],
-        reasoning: 'No qualified team members available at this time.'
-      };
+      this.loadDemoUsers();
     }
     
     // Advanced AGI-powered team selection algorithm
