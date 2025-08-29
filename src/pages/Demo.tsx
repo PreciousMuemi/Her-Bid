@@ -22,7 +22,6 @@ const Demo = () => {
     phone: '+254712345000'
   });
 
-  // Check backend connection and load users
   useEffect(() => {
     const checkBackendAndLoadUsers = async () => {
       try {
@@ -52,37 +51,8 @@ const Demo = () => {
       } catch (error) {
         console.error('❌ Backend connection failed:', error);
         setBackendConnected(false);
-        
-        // Set fallback mock users
-        const mockUsers = [
-          { 
-            id: '1', 
-            name: 'Grace Wanjiku', 
-            location: 'Nairobi', 
-            skills: ['Egg Supply', 'Poultry Farming'], 
-            capacity_numeric: 3, 
-            reputation_score: 9.2 
-          },
-          { 
-            id: '2', 
-            name: 'Mary Njeri', 
-            location: 'Nairobi', 
-            skills: ['Logistics', 'Distribution'], 
-            capacity_numeric: 4, 
-            reputation_score: 8.7 
-          },
-          { 
-            id: '3', 
-            name: 'Jane Muthoni', 
-            location: 'Kiambu', 
-            skills: ['Quality Control', 'Inspection'], 
-            capacity_numeric: 2, 
-            reputation_score: 8.9 
-          }
-        ];
-        
-        setAvailableUsers(mockUsers);
-        console.log('🔄 Using fallback mock users');
+        setAvailableUsers([]);
+        console.log('⚠️ No mock data - backend required for demo');
       }
     };
     
@@ -93,18 +63,8 @@ const Demo = () => {
     setLoading(true);
     try {
       if (!backendConnected) {
-        // Use mock recommendation if backend is down
-        const mockRecommendation = {
-          recommended_team: availableUsers.slice(0, 3),
-          explanation: `Mock AGI Analysis: Selected team of ${availableUsers.slice(0, 3).length} members with combined capacity of ${availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0)} schools/day. High reputation scores and complementary skills.`,
-          total_capacity: availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0),
-          confidence_score: 87,
-          estimated_cost: []
-        };
-        
-        setTeamRecommendation(mockRecommendation);
-        setCurrentStep(2);
-        console.log('✅ Mock recommendation generated');
+        alert('❌ Backend not connected. Please start your backend server on localhost:4000');
+        setLoading(false);
         return;
       }
       
@@ -139,19 +99,7 @@ const Demo = () => {
       }
     } catch (error) {
       console.error('❌ Error getting team recommendation:', error);
-      alert(`AGI Error: ${error.message}\n\nUsing mock data for demo purposes.`);
-      
-      // Fallback to mock recommendation
-      const mockRecommendation = {
-        recommended_team: availableUsers.slice(0, 3),
-        explanation: `Fallback AGI Analysis: Selected team with total capacity of ${availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0)} schools/day.`,
-        total_capacity: availableUsers.slice(0, 3).reduce((sum, user) => sum + (user.capacity_numeric || 0), 0),
-        confidence_score: 75,
-        estimated_cost: []
-      };
-      
-      setTeamRecommendation(mockRecommendation);
-      setCurrentStep(2);
+      alert(`AGI Error: ${error.message}\n\nPlease ensure your backend is running.`);
     }
     setLoading(false);
   };
@@ -160,18 +108,8 @@ const Demo = () => {
     setLoading(true);
     try {
       if (!backendConnected) {
-        // Mock escrow for demo
-        const mockEscrow = {
-          project_id: `mock_project_${Date.now()}`,
-          amount: projectData.budget,
-          status: 'secured',
-          checkout_request_id: `CHK_MOCK_${Date.now()}`,
-          created_at: new Date().toISOString()
-        };
-        
-        setEscrowStatus(mockEscrow);
-        setCurrentStep(3);
-        console.log('✅ Mock escrow created');
+        alert('❌ Backend not connected. Please start your backend server on localhost:4000');
+        setLoading(false);
         return;
       }
       
@@ -194,7 +132,8 @@ const Demo = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -208,19 +147,7 @@ const Demo = () => {
       }
     } catch (error) {
       console.error('❌ Error securing funds:', error);
-      alert(`M-Pesa Error: ${error.message}\n\nUsing mock escrow for demo.`);
-      
-      // Mock escrow for demo
-      const mockEscrow = {
-        project_id: `fallback_project_${Date.now()}`,
-        amount: projectData.budget,
-        status: 'secured',
-        checkout_request_id: `CHK_FALLBACK_${Date.now()}`,
-        created_at: new Date().toISOString()
-      };
-      
-      setEscrowStatus(mockEscrow);
-      setCurrentStep(3);
+      alert(`M-Pesa Error: ${error.message}\n\nPlease check your M-Pesa credentials and try again.`);
     }
     setLoading(false);
   };
@@ -231,40 +158,40 @@ const Demo = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-foreground">
-            🚀 Gige-Bid Real Demo: Live AGI + M-Pesa
+            🚀 Her-Bid Live Demo: AGI + M-Pesa Integration
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Real AGI team formation • Live database • Simulated M-Pesa integration
+            Real AGI team formation • Live Supabase database • Production M-Pesa integration
           </p>
           
           <div className="flex justify-center gap-2 flex-wrap">
             <Badge variant="outline" className={`px-3 py-1 ${
-              backendConnected ? 'border-green-500 text-green-700' : 'border-orange-500 text-orange-700'
+              backendConnected ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'
             }`}>
               <Users className="w-3 h-3 mr-1" />
-              {availableUsers.length} Users {backendConnected ? '(Live)' : '(Mock)'}
+              {backendConnected ? `${availableUsers.length} Users (Live)` : 'Backend Offline'}
             </Badge>
             <Badge variant="outline" className={`px-3 py-1 ${
-              backendConnected ? 'border-blue-500 text-blue-700' : 'border-orange-500 text-orange-700'
+              backendConnected ? 'border-blue-500 text-blue-700' : 'border-red-500 text-red-700'
             }`}>
               <Zap className="w-3 h-3 mr-1" />
-              AGI Engine {backendConnected ? '(Live)' : '(Mock)'}
+              AGI Engine {backendConnected ? '(Live)' : '(Offline)'}
             </Badge>
             <Badge variant="outline" className="px-3 py-1 border-purple-500 text-purple-700">
               <Phone className="w-3 h-3 mr-1" />
-              M-Pesa Integration
+              M-Pesa Ready
             </Badge>
           </div>
 
           {/* Backend Status Warning */}
           {!backendConnected && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-2xl mx-auto">
-              <div className="flex items-center space-x-2 text-orange-800">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <div className="flex items-center space-x-2 text-red-800">
                 <AlertCircle className="w-5 h-5" />
-                <span className="font-medium">Backend Offline - Using Mock Data</span>
+                <span className="font-medium">Backend Required for Demo</span>
               </div>
-              <p className="text-sm text-orange-700 mt-1">
-                Start your backend server on localhost:4000 for full functionality
+              <p className="text-sm text-red-700 mt-1">
+                Start your backend server on localhost:4000 to use AGI recommendations and M-Pesa
               </p>
             </div>
           )}
@@ -290,9 +217,9 @@ const Demo = () => {
         {availableUsers.length > 0 && currentStep === 1 && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>💾 Available Team Members {backendConnected ? '(Live Data)' : '(Mock Data)'}</CardTitle>
+              <CardTitle>💾 Available Team Members (Live Data)</CardTitle>
               <CardDescription>
-                {availableUsers.length} verified professionals {backendConnected ? 'loaded from database' : 'using fallback data'}
+                {availableUsers.length} verified professionals loaded from database
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -316,6 +243,29 @@ const Demo = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Backend Required Notice */}
+        {!backendConnected && currentStep === 1 && (
+          <Card className="mb-6 border-orange-200">
+            <CardHeader>
+              <CardTitle className="text-orange-800">⚠️ Backend Required</CardTitle>
+              <CardDescription>
+                Start your backend server to use real AGI recommendations and M-Pesa integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h4 className="font-medium text-orange-900 mb-2">Quick Setup:</h4>
+                <ol className="text-sm text-orange-800 space-y-1">
+                  <li>1. Open terminal in project folder</li>
+                  <li>2. Run: <code className="bg-orange-200 px-1 rounded">cd server && npm start</code></li>
+                  <li>3. Backend will start on localhost:4000</li>
+                  <li>4. Refresh this page</li>
+                </ol>
               </div>
             </CardContent>
           </Card>
@@ -407,9 +357,9 @@ const Demo = () => {
               <Button 
                 onClick={handleGetTeamRecommendation} 
                 className="w-full"
-                disabled={loading}
+                disabled={loading || !backendConnected}
               >
-                {loading ? '🧠 AGI Engine Processing...' : `🚀 Get ${backendConnected ? 'Live' : 'Mock'} AGI Team Recommendation`}
+                {loading ? '🧠 AGI Engine Processing...' : '🚀 Get Live AGI Team Recommendation'}
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </CardContent>
@@ -422,7 +372,7 @@ const Demo = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-blue-800">
                 <Zap className="w-5 h-5" />
-                <span>Step 2: AGI Team Recommendation {!backendConnected && '(Mock)'}</span>
+                <span>Step 2: AGI Team Recommendation</span>
               </CardTitle>
               <CardDescription>
                 AI-powered optimal team formation based on your requirements
@@ -434,10 +384,10 @@ const Demo = () => {
                 <p className="text-blue-800 text-sm">{teamRecommendation.explanation}</p>
                 <div className="mt-2 flex gap-4 text-sm">
                   <span className="text-blue-700">
-                    🎯 Confidence: {teamRecommendation.confidence_score}%
+                    🎯 Confidence: {teamRecommendation.confidence_score || 'N/A'}%
                   </span>
                   <span className="text-blue-700">
-                    📈 Total Capacity: {teamRecommendation.total_capacity} schools/day
+                    📈 Total Capacity: {teamRecommendation.total_capacity || 'N/A'} schools/day
                   </span>
                 </div>
               </div>
@@ -465,9 +415,9 @@ const Demo = () => {
               <Button 
                 onClick={handleSecureFunds} 
                 className="w-full"
-                disabled={loading}
+                disabled={loading || !backendConnected}
               >
-                {loading ? '💰 Processing M-Pesa...' : `🔒 Secure Funds with ${backendConnected ? 'Live' : 'Mock'} M-Pesa`}
+                {loading ? '💰 Processing M-Pesa...' : '🔒 Secure Funds with Live M-Pesa'}
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </CardContent>
@@ -480,7 +430,7 @@ const Demo = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-800">
                 <Shield className="w-5 h-5" />
-                <span>Step 3: M-Pesa Escrow Secured {!backendConnected && '(Mock)'}</span>
+                <span>Step 3: M-Pesa Escrow Secured</span>
               </CardTitle>
               <CardDescription>
                 Funds secured in escrow. Project ready to begin!

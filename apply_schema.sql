@@ -138,3 +138,11 @@ CREATE POLICY "Allow all operations on milestone_payments" ON milestone_payments
 CREATE POLICY "Allow all operations on escrow_details" ON escrow_details FOR ALL USING (true);
 CREATE POLICY "Allow all operations on mpesa_transactions" ON mpesa_transactions FOR ALL USING (true);
 CREATE POLICY "Allow all operations on sms_logs" ON sms_logs FOR ALL USING (true);
+
+-- Verify tables were created
+SELECT 'Tables created successfully!' as status;
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name IN ('users', 'projects', 'project_milestones', 'milestone_payments', 'escrow_details', 'mpesa_transactions', 'sms_logs')
+ORDER BY table_name;

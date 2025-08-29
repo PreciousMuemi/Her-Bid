@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts"
+    "dev": "NODE_OPTIONS=\"--import tsx/esm\" npx dotenv-cli -e .env tsx watch src/index.ts",
+    "start": "NODE_OPTIONS=\"--import tsx/esm\" npx dotenv-cli -e .env tsx src/index.ts"
   },
   "dependencies": {
     "@mysten/sui.js": "^0.53.0",

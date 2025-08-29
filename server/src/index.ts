@@ -13,9 +13,9 @@ console.log('SERVICE_KEY prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.substr
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino';
-import userRouter from './routes/users.js';
-import escrowRouter from './routes/escrow.js';
-import paymentRouter from './routes/payment.js';
+import userRouter from './routes/users.ts';
+import escrowRouter from './routes/escrow.ts';
+import paymentRouter from './routes/payments.ts';
 
 const app = express();
 const logger = pino();

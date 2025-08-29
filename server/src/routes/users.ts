@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import database from '../models/supabaseDatabase.js';
+import database from '../models/supabaseDatabase.ts';
 
 const router = express.Router();
 
